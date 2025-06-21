@@ -10,56 +10,38 @@ if (!isset($_SESSION['user_id'])) {
   exit;
 }
 
-$target = $_GET['target'] ?? '';
-if (!$target) {
+$userId = $_SESSION['user_id'];
+$otherUsername = $_GET['with'] ?? '';
+
+if (!$otherUsername) {
   http_response_code(400);
-  echo json_encode(['error' => 'Target username is required']);
+  echo json_encode(['error' => 'Missing target username']);
   exit;
 }
 
-$userId = $_SESSION['user_id'];
-
+// Get target user ID
 $stmt = $pdo->prepare("SELECT id FROM users WHERE username = ?");
-$stmt->execute([$target]);
-$targetUser = $stmt->fetch(PDO::FETCH_ASSOC);
-if (!$targetUser) {
+$stmt->execute([$otherUsername]);
+$otherUser = $stmt->fetch();
+
+if (!$otherUser) {
   http_response_code(404);
   echo json_encode(['error' => 'Target user not found']);
   exit;
 }
+$otherUserId = $otherUser['id'];
 
-$targetId = $targetUser['id'];
-
-// Fetch messages where current user is sender or receiver
+// Fetch messages between these two users ordered by created_at ASC
 $stmt = $pdo->prepare("
-  SELECT 
-    m.sender_id,
-    u.username AS sender,
-    m.receiver_id,
-    m.message,
-    m.message_for_sender,
-    m.created_at
-  FROM messages m
-  JOIN users u ON u.id = m.sender_id
-  WHERE 
-    (sender_id = :user AND receiver_id = :target) OR
-    (sender_id = :target AND receiver_id = :user)
-  ORDER BY m.created_at ASC
+    SELECT sender_id, receiver_id, message, message_for_sender, created_at
+    FROM messages
+    WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)
+    ORDER BY created_at ASC
 ");
-$stmt->execute([
-  'user' => $userId,
-  'target' => $targetId,
-]);
-$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$stmt->execute([$userId, $otherUserId, $otherUserId, $userId]);
+$messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Return message encrypted for *this* user
-$messages = [];
-foreach ($rows as $row) {
-  $messages[] = [
-    'sender' => $row['sender'],
-    'encrypted_message' => ($row['sender_id'] == $userId) ? $row['message_for_sender'] : $row['message'],
-    'created_at' => $row['created_at'],
-  ];
-}
-
-echo json_encode($messages);
+echo json_encode(['messages' => $messages]);
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);

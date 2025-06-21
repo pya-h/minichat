@@ -5,28 +5,25 @@ require_once '../includes/db.php';
 header('Content-Type: application/json');
 
 if (!isset($_SESSION['user_id'])) {
-    http_response_code(401);
-    echo json_encode(['error' => 'Not logged in']);
-    exit;
+  http_response_code(401);
+  echo json_encode(['error' => 'Not logged in']);
+  exit;
 }
 
 $userId = $_SESSION['user_id'];
 
-$sql = "
-  SELECT u.username
+// Get distinct users that current user chatted with (sender or receiver)
+$stmt = $pdo->prepare("
+  SELECT DISTINCT u.username
   FROM users u
-  INNER JOIN (
-    SELECT sender_id AS uid FROM messages WHERE receiver_id = :uid
+  JOIN (
+    SELECT sender_id as user_id FROM messages WHERE receiver_id = ?
     UNION
-    SELECT receiver_id AS uid FROM messages WHERE sender_id = :uid
-  ) m ON u.id = m.uid
-  WHERE u.id != :uid
-  GROUP BY u.username
-  ORDER BY MAX(m.uid) DESC
-";
+    SELECT receiver_id as user_id FROM messages WHERE sender_id = ?
+  ) m ON u.id = m.user_id
+  WHERE u.id != ?
+");
+$stmt->execute([$userId, $userId, $userId]);
+$users = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
-$stmt = $pdo->prepare($sql);
-$stmt->execute(['uid' => $userId]);
-$users = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-echo json_encode($users);
+echo json_encode(['chatUsers' => $users]);

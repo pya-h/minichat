@@ -14,35 +14,33 @@ $userId = $_SESSION['user_id'];
 $senderUsername = $_SESSION['username'];
 
 $target = $_POST['target'] ?? '';
-$message = $_POST['message'] ?? '';
-$messageForSender = $_POST['message_for_sender'] ?? '';
+$messageEncryptedForRecipient = $_POST['message'] ?? '';
+$messageEncryptedForSender = $_POST['message_for_sender'] ?? '';
 
-if (!$target || !$message || !$messageForSender) {
+if (!$target || !$messageEncryptedForRecipient || !$messageEncryptedForSender) {
     http_response_code(400);
-    echo json_encode(['error' => 'Target and both encrypted messages are required']);
+    echo json_encode(['error' => 'Missing parameters']);
     exit;
 }
 
-// Find or create target user
-$stmt = $pdo->prepare("SELECT id, public_key FROM users WHERE username = ?");
+// Find target user
+$stmt = $pdo->prepare("SELECT id FROM users WHERE username = ?");
 $stmt->execute([$target]);
-$targetUser = $stmt->fetch(PDO::FETCH_ASSOC);
+$targetUser = $stmt->fetch();
 
 if (!$targetUser) {
-    $stmt = $pdo->prepare("INSERT INTO users (username, password_hash) VALUES (?, '')");
-    $stmt->execute([$target]);
-    $targetUserId = $pdo->lastInsertId();
-} else {
-    $targetUserId = $targetUser['id'];
-    if (!$targetUser['public_key']) {
-        http_response_code(400);
-        echo json_encode(['error' => 'Target user has no public key; cannot send encrypted message']);
-        exit;
-    }
+    http_response_code(404);
+    echo json_encode(['error' => 'Target user not found']);
+    exit;
 }
 
-// Save message with both encrypted versions
+// Save encrypted messages
 $stmt = $pdo->prepare("INSERT INTO messages (sender_id, receiver_id, message, message_for_sender) VALUES (?, ?, ?, ?)");
-$stmt->execute([$userId, $targetUserId, $message, $messageForSender]);
+$stmt->execute([
+    $userId,
+    $targetUser['id'],
+    $messageEncryptedForRecipient,
+    $messageEncryptedForSender,
+]);
 
 echo json_encode(['status' => 'ok']);

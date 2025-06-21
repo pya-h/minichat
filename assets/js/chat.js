@@ -1,118 +1,146 @@
-const Chat = (() => {
-  const userListEl = document.getElementById("chat-users");
-  const messageInput = document.getElementById("message-input");
-  const chatBoxEl = document.getElementById("chat-box");
-  const sendForm = document.getElementById("send-form");
-  const targetInput = document.getElementById("target-input");
-  const noChatMsg = document.getElementById("no-chat-msg");
+const chatListElem = document.getElementById("chatList");
+const chatMessagesElem = document.getElementById("chatMessages");
+const chatForm = document.getElementById("chatForm");
+const chatInput = document.getElementById("chatInput");
+const chatWithElem = document.getElementById("chatWith");
+const searchUserInput = document.getElementById("searchUser");
 
-  let selectedUser = null;
-  let messages = [];
+let currentChatUser = null;
+const chatUsers = new Set();
 
-  async function fetchChats() {
-    const res = await fetch("api/fetch_chats.php");
-    const users = await res.json();
-    userListEl.innerHTML = "";
-    users.forEach((user) => {
-      const li = document.createElement("li");
-      li.className = "list-group-item list-group-item-action";
-      li.textContent = user.username;
-      li.onclick = () => selectUser(user.username);
-      if (user.username === selectedUser) li.classList.add("active");
-      userListEl.appendChild(li);
-    });
-  }
+function addUserToChatList(username) {
+  if (chatUsers.has(username) || username === CURRENT_USER) return;
+  chatUsers.add(username);
+  const li = document.createElement("li");
+  li.textContent = username;
+  li.classList.add("chat-user");
+  li.addEventListener("click", () => selectChatUser(username));
+  chatListElem.appendChild(li);
+}
 
-  async function selectUser(username) {
-    selectedUser = username;
-    targetInput.value = username;
-    await fetchChats(); // re-highlight
-    loadMessages();
-  }
+function selectChatUser(username) {
+  currentChatUser = username;
+  chatWithElem.textContent = `Chat with ${username}`;
+  chatInput.disabled = false;
+  chatInput.value = "";
+  chatMessagesElem.innerHTML = "";
 
-  async function loadMessages() {
-    if (!selectedUser) return;
+  [...chatListElem.children].forEach((li) => {
+    li.classList.toggle("active", li.textContent === username);
+  });
+
+  loadMessages(username);
+}
+
+async function loadMessages(username) {
+  chatMessagesElem.innerHTML = "Loading messages...";
+
+  try {
     const res = await fetch(
-      `api/fetch_messages.php?target=${encodeURIComponent(selectedUser)}`
+      `api/fetch_messages.php?with=${encodeURIComponent(username)}`
     );
+    if (!res.ok) throw new Error("Failed to load messages");
     const data = await res.json();
 
-    chatBoxEl.innerHTML = "";
-    if (data.length === 0) {
-      chatBoxEl.innerHTML = `<p class="text-muted">🕊️ No messages yet</p>`;
+    chatMessagesElem.innerHTML = "";
+    if (!data.messages.length) {
+      chatMessagesElem.textContent = "No messages yet.";
       return;
     }
 
-    for (const msg of data) {
-      const div = document.createElement("div");
-      div.className = `alert ${
-        msg.sender === CURRENT_USER
-          ? "alert-primary text-end ms-auto"
-          : "alert-secondary text-start me-auto"
-      } fade show mb-2`;
-      div.style.maxWidth = "75%";
-      div.setAttribute("role", "alert");
+    for (const msg of data.messages) {
+      let decryptedText = "[Unable to decrypt message]";
 
-      const decrypted = await Crypto.decrypt(msg.encrypted_message);
-      div.textContent = decrypted;
-      chatBoxEl.appendChild(div);
-    }
-    chatBoxEl.scrollTop = chatBoxEl.scrollHeight;
-  }
-
-  async function sendMessage(message) {
-    if (!selectedUser || !message) return;
-    try {
-      const encryptedForRecipient = await Crypto.encrypt(
-        message,
-        selectedUser
-      );
-      const encryptedForSender = await Crypto.encrypt(message, CURRENT_USER);
-
-      const res = await fetch("api/send_message.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          target: selectedUser,
-          message: encryptedForRecipient,
-          message_for_sender: encryptedForSender,
-        }),
-      });
-
-      const result = await res.json();
-      if (result.status === "ok") {
-        messageInput.value = "";
-        await loadMessages();
-        await fetchChats();
-      } else {
-        alert(result.error || "Failed to send message");
+      try {
+        // If current user sent the message, decrypt message_for_sender
+        if (msg.sender_id == CURRENT_USER_ID) {
+          decryptedText = await decryptMessage(msg.message_for_sender);
+        }
+        // Else current user received message, decrypt message
+        else {
+          decryptedText = await decryptMessage(msg.message);
+        }
+      } catch (e) {
+        decryptedText = "[Decryption error]";
       }
-    } catch (err) {
-      alert("Encryption/send error: " + err.message);
+
+      const div = document.createElement("div");
+      div.classList.add("message");
+      div.classList.add(msg.sender_id == CURRENT_USER_ID ? "sent" : "received");
+      div.textContent = decryptedText;
+      chatMessagesElem.appendChild(div);
     }
+
+    chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
+  } catch (err) {
+    chatMessagesElem.textContent = "Error loading messages";
+    console.error(err);
   }
+}
 
-  sendForm.onsubmit = (e) => {
-    e.preventDefault();
-    const text = messageInput.value.trim();
-    if (!text || !selectedUser) return;
-    sendMessage(text);
-  };
+chatForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (!currentChatUser) {
+    alert("Select a user to chat with first");
+    return;
+  }
+  const text = chatInput.value.trim();
+  if (!text) return;
 
-  targetInput.onchange = () => {
-    const target = targetInput.value.trim();
-    if (target && target !== selectedUser) {
-      selectUser(target);
+  try {
+    const recipientKey = await getPublicKey(currentChatUser);
+    const senderKey = await getPublicKey(CURRENT_USER);
+
+    const encryptedForRecipient = await encryptMessage(text, recipientKey);
+    const encryptedForSender = await encryptMessage(text, senderKey);
+
+    const formData = new FormData();
+    formData.append("target", currentChatUser);
+    formData.append("message", encryptedForRecipient);
+    formData.append("message_for_sender", encryptedForSender);
+
+    const res = await fetch("api/send_message.php", {
+      method: "POST",
+      body: formData,
+    });
+    const json = await res.json();
+    if (json.status !== "ok") throw new Error(json.error || "Send failed");
+
+    addUserToChatList(currentChatUser);
+    chatInput.value = "";
+    loadMessages(currentChatUser);
+  } catch (err) {
+    alert("Encryption/send error: " + err.message);
+  }
+});
+
+searchUserInput.addEventListener("change", () => {
+  const val = searchUserInput.value.trim();
+  if (!val || val === CURRENT_USER) return;
+  addUserToChatList(val);
+  searchUserInput.value = "";
+});
+
+addUserToChatList(CURRENT_USER);
+chatInput.disabled = true;
+
+// On page load: fetch private key for decryption
+fetchAndImportPrivateKey().catch((err) => {
+  alert("Error loading private key: " + err.message);
+});
+
+async function loadChatList() {
+  try {
+    const res = await fetch("api/fetch_chats.php");
+    if (!res.ok) throw new Error("Failed to load chat list");
+    const data = await res.json();
+    if (data.chatUsers && Array.isArray(data.chatUsers)) {
+      data.chatUsers.forEach(addUserToChatList);
     }
-  };
+  } catch (e) {
+    console.error("Error loading chat list:", e);
+  }
+}
 
-  return {
-    init: () => {
-      fetchChats();
-      setInterval(() => {
-        fetchChats();
-        if (selectedUser) loadMessages();
-      }, 3000);
-    },
-  };
-})();
+// Call on page load
+loadChatList();

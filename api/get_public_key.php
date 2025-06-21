@@ -1,25 +1,25 @@
 <?php
+session_start();
 require_once '../includes/db.php';
 
 header('Content-Type: application/json');
 
-if (!isset($_GET['username'])) {
+$username = $_GET['username'] ?? '';
+if (!$username) {
     http_response_code(400);
-    echo json_encode(['error' => 'Username is required']);
+    echo json_encode(['error' => 'Missing username']);
     exit;
 }
-
-$username = trim($_GET['username']);
 
 $stmt = $pdo->prepare("SELECT public_key FROM users WHERE username = ?");
 $stmt->execute([$username]);
-$user = $stmt->fetch(PDO::FETCH_ASSOC);
+$user = $stmt->fetch();
 
-if (!$user || !$user['public_key']) {
+if (!$user) {
     http_response_code(404);
-    echo json_encode(['error' => 'Public key not found']);
+    echo json_encode(['error' => 'User not found']);
     exit;
 }
 
-// public_key is stored as JSON string, decode once before returning
+// Return raw PEM public key string as JSON
 echo json_encode(['publicKey' => $user['public_key']]);
