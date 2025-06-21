@@ -6,19 +6,41 @@ const chatWithElem = document.getElementById("chatWith");
 const searchUserInput = document.getElementById("searchUser");
 
 let currentChatUser = null;
+let recentMessage = null;
 const chatUsers = new Set();
 
 function addUserToChatList(username) {
   if (chatUsers.has(username) || username === CURRENT_USER) return;
   chatUsers.add(username);
+
   const li = document.createElement("li");
-  li.textContent = username;
+  li.tabIndex = 0; // for keyboard accessibility
+
+  // Generate initials from username
+  const initials = username
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase();
+
+  li.innerHTML = `<span class="avatar">${initials}</span> <span>${username}</span><span id='user_${username}_loading' style="display:none" class="spinner-border spinner-border-sm text-primary ms-2" role="status" aria-hidden="true"></span>`;
   li.classList.add("chat-user");
   li.addEventListener("click", () => selectChatUser(username));
   chatListElem.appendChild(li);
 }
 
+function updateLoadingSpinnerState(username, show = false) {
+  const loadingSpinnerElement = document.getElementById(
+    `user_${username}_loading`
+  );
+  loadingSpinnerElement.style = `display: ${show ? "inline" : "none"}`;
+}
+
 function selectChatUser(username) {
+  recentMessage = null;
+  if (currentChatUser?.length) {
+    updateLoadingSpinnerState(currentChatUser, false);
+  }
   currentChatUser = username;
   chatWithElem.textContent = `Chat with ${username}`;
   chatInput.disabled = false;
@@ -29,25 +51,39 @@ function selectChatUser(username) {
     li.classList.toggle("active", li.textContent === username);
   });
 
-  loadMessages(username);
+  loadMessages(username, true);
 }
 
-async function loadMessages(username) {
-  chatMessagesElem.innerHTML = "Loading messages...";
-
+async function loadMessages(username, showLoading = false) {
   try {
+    const loadingSpinnerElement = document.getElementById(
+      `user_${username}_loading`
+    );
+    if (showLoading) {
+      loadingSpinnerElement.style = "display: inline";
+    }
     const res = await fetch(
       `api/fetch_messages.php?with=${encodeURIComponent(username)}`
     );
     if (!res.ok) throw new Error("Failed to load messages");
     const data = await res.json();
-
-    chatMessagesElem.innerHTML = "";
     if (!data.messages.length) {
+      chatMessagesElem.innerHTML = "";
       chatMessagesElem.textContent = "No messages yet.";
+      loadingSpinnerElement.style = "display: none";
       return;
     }
 
+    if (recentMessage?.created_at) {
+      const lastMessage = data.messages[data.messages.length - 1];
+      lastMessage.created_at = new Date(lastMessage.created_at);
+      if (lastMessage.created_at <= recentMessage.created_at) {
+        loadingSpinnerElement.style = "display: none";
+        return;
+      }
+    }
+
+    chatMessagesElem.innerHTML = "";
     for (const msg of data.messages) {
       let decryptedText = "[Unable to decrypt message]";
 
@@ -72,10 +108,11 @@ async function loadMessages(username) {
     }
 
     chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
+    recentMessage = data.messages?.[data.messages.length - 1];
   } catch (err) {
     chatMessagesElem.textContent = "Error loading messages";
-    console.error(err);
   }
+  loadingSpinnerElement.style = "display: none";
 }
 
 chatForm.addEventListener("submit", async (e) => {
@@ -86,6 +123,11 @@ chatForm.addEventListener("submit", async (e) => {
   }
   const text = chatInput.value.trim();
   if (!text) return;
+
+  // Animate send button
+  const sendBtn = chatForm.querySelector('button[type="submit"]');
+  sendBtn.disabled = true;
+  sendBtn.classList.add("btn-pressed");
 
   try {
     const recipientKey = await getPublicKey(currentChatUser);
@@ -111,6 +153,9 @@ chatForm.addEventListener("submit", async (e) => {
     loadMessages(currentChatUser);
   } catch (err) {
     alert("Encryption/send error: " + err.message);
+  } finally {
+    sendBtn.disabled = false;
+    sendBtn.classList.remove("btn-pressed");
   }
 });
 
@@ -134,6 +179,9 @@ async function loadChatList() {
     const res = await fetch("api/fetch_chats.php");
     if (!res.ok) throw new Error("Failed to load chat list");
     const data = await res.json();
+    if (chatUsers?.size === data.chatUsers.length) {
+      return;
+    }
     if (data.chatUsers && Array.isArray(data.chatUsers)) {
       data.chatUsers.forEach(addUserToChatList);
     }
@@ -144,3 +192,12 @@ async function loadChatList() {
 
 // Call on page load
 loadChatList();
+
+setInterval(() => {
+  if (!currentChatUser?.length) return;
+  loadMessages(currentChatUser);
+}, 1000);
+
+setInterval(() => {
+  loadChatList();
+}, 5000);
