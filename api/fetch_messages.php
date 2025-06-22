@@ -33,7 +33,7 @@ $otherUserId = $otherUser['id'];
 
 // Fetch messages between these two users ordered by created_at ASC
 $stmt = $pdo->prepare("
-    SELECT id, sender_id, receiver_id, message, message_for_sender, message_type, voice_file_path, created_at
+    SELECT id, sender_id, receiver_id, message, message_for_sender, message_type, voice_file_path, image_file_path, created_at
     FROM messages
     WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)
     ORDER BY created_at ASC

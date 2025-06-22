@@ -478,10 +478,21 @@ nav.navbar {
   display: flex;
   align-items: center;
   padding: 0.5rem;
-  background: rgba(13, 110, 253, 0.1);
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 8px;
   font-size: 0.9rem;
-  color: #0d6efd;
+  opacity: 0.8;
+}
+
+/* Image Message Sending Indicator */
+.image-message-sending {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  opacity: 0.8;
 }
 
 /* Voice Button Styles */
@@ -661,3 +672,55 @@ nav.navbar {
 .message.received .voice-duration-display {
   color: #212529;
 }
+
+/* --- STYLES FOR IMAGE MESSAGES --- */
+.message.is-image-message {
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+  max-width: 45%; /* Images can be a bit wider */
+}
+
+.message.is-image-message a {
+  display: block;
+  border-radius: 18px; /* Match bubble shape */
+  overflow: hidden; /* Keep image inside rounded corners */
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.1);
+  transition: box-shadow 0.2s ease;
+}
+
+.message.is-image-message a:hover {
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.15);
+}
+
+.message-image {
+  max-width: 100%;
+  display: block; /* Remove bottom space under image */
+  height: auto;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  border-radius: 18px; /* Match the link border radius */
+}
+
+.message-image:hover {
+  transform: scale(1.02);
+}
+
+/* Responsive image messages */
+@media (max-width: 767.98px) {
+  .message.is-image-message {
+    max-width: 70%; /* Wider on mobile for better visibility */
+  }
+}
+
+/* Image loading and error states */
+.message.is-image-message .image-error {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 18px;
+  padding: 20px;
+  text-align: center;
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+/* --- END IMAGE STYLES --- */

@@ -4,6 +4,8 @@ const chatForm = document.getElementById("chatForm");
 const chatInput = document.getElementById("chatInput");
 const chatWithElem = document.getElementById("chatWith");
 const searchUserInput = document.getElementById("searchUser");
+const imageUploadInput = document.getElementById("imageUploadInput");
+const imageUploadBtn = document.getElementById("imageUploadBtn");
 
 let currentChatUser = null;
 let recentMessage = null;
@@ -120,6 +122,20 @@ async function loadMessages(username, showLoading = false) {
           </div>
         `;
         div.setAttribute('data-message-id', msg.id);
+      } else if (msg.message_type === 'image' && msg.image_file_path) {
+        // Add a special class for image messages
+        div.classList.add('is-image-message');
+        
+        // The image will be the content of the bubble
+        div.innerHTML = `
+          <a href="api/get_image.php?id=${msg.id}" target="_blank" title="View full image">
+            <img src="api/get_image.php?id=${msg.id}" class="message-image" alt="Image from ${msg.sender_id}" 
+                 onload="this.parentNode.parentNode.parentNode.scrollTop = this.parentNode.parentNode.parentNode.scrollHeight"
+                 onerror="this.parentNode.innerHTML='<div style=\\'padding: 20px; text-align: center; color: #6c757d;\\'>Image not available</div>'">
+          </a>
+        `;
+        // onload is a bit of a hack to scroll down once the image loads
+        // onerror provides fallback for failed image loads
       } else {
         // Text message
         let decryptedText = '[Unable to decrypt message]';
@@ -526,17 +542,10 @@ async function sendVoiceMessage(audioBlob) {
     chatMessagesElem.appendChild(sendingIndicator);
     chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
     
-    const recipientKey = await getPublicKey(currentChatUser);
-    const senderKey = await getPublicKey(CURRENT_USER);
-    
-    // Encrypt a placeholder text for voice messages
-    const encryptedForRecipient = await encryptMessage('[Voice message]', recipientKey);
-    const encryptedForSender = await encryptMessage('[Voice message]', senderKey);
-    
     const formData = new FormData();
     formData.append('target', currentChatUser);
-    formData.append('message', encryptedForRecipient);
-    formData.append('message_for_sender', encryptedForSender);
+    formData.append('message', null); // TODO: Add caption for voice messages
+    formData.append('message_for_sender', null);
     formData.append('voice_file', audioBlob, 'voice_message.webm');
     
     const res = await fetch('api/send_voice_message.php', {
@@ -557,5 +566,86 @@ async function sendVoiceMessage(audioBlob) {
 
     const sendingIndicator = document.querySelector('.sending-indicator');
     if (sendingIndicator) sendingIndicator.remove();
+  }
+}
+
+// --- Image Upload Logic ---
+imageUploadBtn.addEventListener('click', () => {
+  if (!currentChatUser) {
+    alert("Select a user to chat with first");
+    return;
+  }
+  imageUploadInput.click(); // Trigger the hidden file input
+});
+
+imageUploadInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file.');
+      e.target.value = null;
+      return;
+    }
+    
+    // Validate file size (5MB limit)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      alert('Image file size must be less than 5MB.');
+      e.target.value = null;
+      return;
+    }
+    
+    sendImageMessage(file);
+  }
+  // Reset the input so the user can select the same file again
+  e.target.value = null;
+});
+
+async function sendImageMessage(imageFile) {
+  try {
+    // Show sending indicator
+    const sendingIndicator = document.createElement('div');
+    sendingIndicator.className = 'message sent sending-indicator';
+    sendingIndicator.innerHTML = `
+      <div class="image-message-sending">
+        <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+        <span>Sending image...</span>
+      </div>
+    `;
+    chatMessagesElem.appendChild(sendingIndicator);
+    chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
+    
+    // Disable the upload button
+    imageUploadBtn.disabled = true;
+
+    const formData = new FormData();
+    formData.append('target', currentChatUser);
+    formData.append('message', null); // TODO: Add caption for image messages
+    formData.append('message_for_sender', null);
+    formData.append('image_file', imageFile, imageFile.name);
+
+    const res = await fetch('api/send_image_message.php', {
+      method: 'POST',
+      body: formData,
+    });
+
+    const json = await res.json();
+    if (json.status !== 'ok') throw new Error(json.error || 'Send failed');
+    
+    // Remove sending indicator
+    sendingIndicator.remove();
+    
+    addUserToChatList(currentChatUser);
+    loadMessages(currentChatUser);
+    
+  } catch (err) {
+    alert('Image send error: ' + err.message);
+    
+    // Remove sending indicator on error
+    const sendingIndicator = document.querySelector('.sending-indicator');
+    if (sendingIndicator) sendingIndicator.remove();
+  } finally {
+    imageUploadBtn.disabled = false;
   }
 }

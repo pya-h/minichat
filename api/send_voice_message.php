@@ -12,10 +12,10 @@ if (!isset($_SESSION['user_id'])) {
 
 $userId = $_SESSION['user_id'];
 $target = $_POST['target'] ?? '';
-$messageEncryptedForRecipient = $_POST['message'] ?? '';
-$messageEncryptedForSender = $_POST['message_for_sender'] ?? '';
+$messageEncryptedForRecipient = $_POST['message'] ?? null;
+$messageEncryptedForSender = $_POST['message_for_sender'] ?? null;
 
-if (!$target || !$messageEncryptedForRecipient || !$messageEncryptedForSender) {
+if (!$target) {
     http_response_code(400);
     echo json_encode(['error' => 'Missing parameters']);
     exit;

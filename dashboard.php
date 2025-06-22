@@ -40,16 +40,32 @@ $user_id = $_SESSION['user_id'];
                     <h5 id="chatWith">Select a chat</h5>
                 </div>
                 <div class="chat-messages" id="chatMessages"></div>
-                <form id="chatForm" class="chat-input" autocomplete="off">
-                    <textarea id="chatInput" rows="2" class="form-control" placeholder="Type your message..." required></textarea>
-                    <button type="button" id="voiceBtn" class="btn btn-secondary ms-2" title="Record voice message">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-mic" viewBox="0 0 16 16">
-                            <path d="M8 12a3 3 0 0 0 3-3V4a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3z"/>
-                            <path d="M5 10a5 5 0 0 0 6 0v1a4 4 0 0 1-8 0v-1a.5.5 0 0 1 1 0v1a3 3 0 0 0 6 0v-1a.5.5 0 0 1 1 0v1a4 4 0 0 1-8 0v-1a.5.5 0 0 1 1 0z"/>
-                        </svg>
-                    </button>
-                    <button type="submit" class="btn btn-primary ms-2">Send</button>
+                <div class="chat-input p-3">
+                    <form id="chatForm" class="d-flex w-100 align-items-center">
+                        <textarea id="chatInput" class="form-control" placeholder="Type a message..." rows="1"></textarea>
+                        
+                        <!-- Hidden file input for image uploads -->
+                        <input type="file" id="imageUploadInput" accept="image/*" style="display: none;">
+
+                        <!-- Image Upload Button -->
+                        <button type="button" id="imageUploadBtn" class="btn btn-secondary ms-2" title="Send an image">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-paperclip" viewBox="0 0 16 16">
+                                <path d="M4.5 3a2.5 2.5 0 0 1 5 0v9a1.5 1.5 0 0 1-3 0V5a.5.5 0 0 1 1 0v7a.5.5 0 0 0 1 0V3a1.5 1.5 0 0 0-3 0v9a2.5 2.5 0 0 0 5 0V5a.5.5 0 0 1 1 0v7a3.5 3.5 0 1 1-7 0V3z"/>
+                            </svg>
+                        </button>
+
+                        <!-- Voice Message Button -->
+                        <button type="button" id="voiceBtn" class="btn btn-secondary ms-2" title="Record voice message">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-mic" viewBox="0 0 16 16">
+                                <path d="M8 12a3 3 0 0 0 3-3V4a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3z"/>
+                                <path d="M5 10a5 5 0 0 0 6 0v1a4 4 0 0 1-8 0v-1a.5.5 0 0 1 1 0v1a3 3 0 0 0 6 0v-1a.5.5 0 0 1 1 0z"/>
+                            </svg>
+                        </button>
+
+                        <!-- Send Button -->
+                        <button type="submit" class="btn btn-primary ms-2">Send</button>
                 </form>
+                </div>
             </section>
         </div>
     </div>
