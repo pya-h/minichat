@@ -11,8 +11,6 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $userId = $_SESSION['user_id'];
-$senderUsername = $_SESSION['username'];
-
 $target = $_POST['target'] ?? '';
 $messageEncryptedForRecipient = $_POST['message'] ?? '';
 $messageEncryptedForSender = $_POST['message_for_sender'] ?? '';
@@ -34,8 +32,8 @@ if (!$targetUser) {
     exit;
 }
 
-// Save encrypted messages
-$stmt = $pdo->prepare("INSERT INTO messages (sender_id, receiver_id, message, message_for_sender) VALUES (?, ?, ?, ?)");
+// Save encrypted text message
+$stmt = $pdo->prepare("INSERT INTO messages (sender_id, receiver_id, message, message_for_sender, message_type) VALUES (?, ?, ?, ?, 'text')");
 $stmt->execute([
     $userId,
     $targetUser['id'],
@@ -43,4 +41,6 @@ $stmt->execute([
     $messageEncryptedForSender,
 ]);
 
-echo json_encode(['status' => 'ok']);
+$messageId = $pdo->lastInsertId();
+
+echo json_encode(['status' => 'ok', 'message_id' => $messageId]); 

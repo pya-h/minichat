@@ -9,6 +9,13 @@ let currentChatUser = null;
 let recentMessage = null;
 const chatUsers = new Set();
 
+// --- Voice Message Logic ---
+let mediaRecorder = null;
+let audioChunks = [];
+const voiceBtn = document.getElementById('voiceBtn');
+let isRecording = false;
+let recordingStartTime = null;
+
 function addUserToChatList(username) {
   if (chatUsers.has(username) || username === CURRENT_USER) return;
   chatUsers.add(username);
@@ -85,25 +92,52 @@ async function loadMessages(username, showLoading = false) {
 
     chatMessagesElem.innerHTML = "";
     for (const msg of data.messages) {
-      let decryptedText = "[Unable to decrypt message]";
-
-      try {
-        // If current user sent the message, decrypt message_for_sender
-        if (msg.sender_id == CURRENT_USER_ID) {
-          decryptedText = await decryptMessage(msg.message_for_sender);
-        }
-        // Else current user received message, decrypt message
-        else {
-          decryptedText = await decryptMessage(msg.message);
-        }
-      } catch (e) {
-        decryptedText = "[Decryption error]";
-      }
-
-      const div = document.createElement("div");
+      let div = document.createElement("div");
       div.classList.add("message");
       div.classList.add(msg.sender_id == CURRENT_USER_ID ? "sent" : "received");
-      div.textContent = decryptedText;
+      
+      if (msg.message_type === "voice" && msg.voice_file_path) {
+        // Voice message with improved UI
+        div.innerHTML = `
+          <div class="voice-message">
+            <div class="voice-message-header">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-mic-fill me-2" viewBox="0 0 16 16">
+                <path d="M5 3.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-.5.5h-5a.5.5 0 0 1-.5-.5v-5z"/>
+                <path d="M0 4.5A1.5 1.5 0 0 1 1.5 3h13A1.5 1.5 0 0 1 16 4.5v8a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-8zM1.5 4a.5.5 0 0 0-.5.5v8a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-8a.5.5 0 0 0-.5-.5h-13z"/>
+              </svg>
+              <span class="voice-message-label">Voice Message</span>
+            </div>
+            <audio controls class="voice-audio-player" preload="metadata">
+              <source src="api/get_voice_message.php?id=${msg.id}" type="audio/webm">
+              Your browser does not support the audio element.
+            </audio>
+          </div>
+        `;
+        
+        // Add duration display when audio loads
+        const audio = div.querySelector('audio');
+        audio.addEventListener('loadedmetadata', function() {
+          const duration = Math.round(audio.duration);
+          const durationSpan = document.createElement('span');
+          durationSpan.className = 'voice-duration';
+          durationSpan.textContent = ` (${duration}s)`;
+          div.querySelector('.voice-message-label').appendChild(durationSpan);
+        });
+        
+      } else {
+        // Text message
+        let decryptedText = "[Unable to decrypt message]";
+        try {
+          if (msg.sender_id == CURRENT_USER_ID) {
+            decryptedText = await decryptMessage(msg.message_for_sender);
+          } else {
+            decryptedText = await decryptMessage(msg.message);
+          }
+        } catch (e) {
+          decryptedText = "[Decryption error]";
+        }
+        div.textContent = decryptedText;
+      }
       chatMessagesElem.appendChild(div);
     }
 
@@ -201,3 +235,145 @@ setInterval(() => {
 setInterval(() => {
   loadChatList();
 }, 5000);
+
+// --- Voice Message Logic ---
+voiceBtn.addEventListener('click', async () => {
+  if (!currentChatUser) {
+    alert('Select a user to chat with first');
+    return;
+  }
+  if (!isRecording) {
+    // Start recording
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks = [];
+      recordingStartTime = Date.now();
+      
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunks.push(e.data);
+      };
+      
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        await sendVoiceMessage(audioBlob);
+        // Stop all tracks to release microphone
+        stream.getTracks().forEach(track => track.stop());
+      };
+      
+      mediaRecorder.start();
+      isRecording = true;
+      voiceBtn.classList.add('btn-danger');
+      voiceBtn.classList.remove('btn-secondary');
+      voiceBtn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-stop-circle" viewBox="0 0 16 16">
+          <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+          <path d="M6.5 5.5A.5.5 0 0 1 7 6v4a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 0A.5.5 0 0 1 10 6v4a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5z"/>
+        </svg>
+      `;
+      voiceBtn.title = 'Stop recording (click to stop)';
+      
+      // Add recording indicator to chat
+      addRecordingIndicator();
+      
+    } catch (err) {
+      alert('Microphone access denied or not available.');
+    }
+  } else {
+    // Stop recording
+    mediaRecorder.stop();
+    isRecording = false;
+    voiceBtn.classList.remove('btn-danger');
+    voiceBtn.classList.add('btn-secondary');
+    voiceBtn.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-mic" viewBox="0 0 16 16">
+        <path d="M8 12a3 3 0 0 0 3-3V4a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3z"/>
+        <path d="M5 10a5 5 0 0 0 6 0v1a4 4 0 0 1-8 0v-1a.5.5 0 0 1 1 0v1a3 3 0 0 0 6 0v-1a.5.5 0 0 1 1 0v1a4 4 0 0 1-8 0v-1a.5.5 0 0 1 1 0z"/>
+      </svg>
+    `;
+    voiceBtn.title = 'Record voice message';
+    
+    // Remove recording indicator
+    removeRecordingIndicator();
+  }
+});
+
+function addRecordingIndicator() {
+  const indicator = document.createElement('div');
+  indicator.id = 'recordingIndicator';
+  indicator.className = 'recording-indicator';
+  indicator.innerHTML = `
+    <div class="recording-content">
+      <div class="recording-dot"></div>
+      <span>Recording voice message...</span>
+      <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="stopRecording()">Stop</button>
+    </div>
+  `;
+  chatMessagesElem.appendChild(indicator);
+  chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
+}
+
+function removeRecordingIndicator() {
+  const indicator = document.getElementById('recordingIndicator');
+  if (indicator) {
+    indicator.remove();
+  }
+}
+
+function stopRecording() {
+  if (isRecording && mediaRecorder) {
+    mediaRecorder.stop();
+  }
+}
+
+// Make stopRecording globally accessible
+window.stopRecording = stopRecording;
+
+async function sendVoiceMessage(audioBlob) {
+  try {
+    // Show sending indicator
+    const sendingIndicator = document.createElement('div');
+    sendingIndicator.className = 'message sent sending-indicator';
+    sendingIndicator.innerHTML = `
+      <div class="voice-message-sending">
+        <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+        <span>Sending voice message...</span>
+      </div>
+    `;
+    chatMessagesElem.appendChild(sendingIndicator);
+    chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
+    
+    const recipientKey = await getPublicKey(currentChatUser);
+    const senderKey = await getPublicKey(CURRENT_USER);
+    
+    // Encrypt a placeholder text for voice messages
+    const encryptedForRecipient = await encryptMessage('[Voice message]', recipientKey);
+    const encryptedForSender = await encryptMessage('[Voice message]', senderKey);
+    
+    const formData = new FormData();
+    formData.append('target', currentChatUser);
+    formData.append('message', encryptedForRecipient);
+    formData.append('message_for_sender', encryptedForSender);
+    formData.append('voice_file', audioBlob, 'voice_message.webm');
+    
+    const res = await fetch('api/send_voice_message.php', {
+      method: 'POST',
+      body: formData,
+    });
+    
+    const json = await res.json();
+    if (json.status !== 'ok') throw new Error(json.error || 'Send failed');
+    
+    // Remove sending indicator
+    sendingIndicator.remove();
+    
+    addUserToChatList(currentChatUser);
+    loadMessages(currentChatUser);
+    
+  } catch (err) {
+    alert('Voice message send error: ' + err.message);
+    // Remove sending indicator on error
+    const sendingIndicator = document.querySelector('.sending-indicator');
+    if (sendingIndicator) sendingIndicator.remove();
+  }
+}

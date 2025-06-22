@@ -42,7 +42,13 @@ $user_id = $_SESSION['user_id'];
                 <div class="chat-messages" id="chatMessages"></div>
                 <form id="chatForm" class="chat-input" autocomplete="off">
                     <textarea id="chatInput" rows="2" class="form-control" placeholder="Type your message..." required></textarea>
-                    <button type="submit" class="btn btn-primary">Send</button>
+                    <button type="button" id="voiceBtn" class="btn btn-secondary ms-2" title="Record voice message">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-mic" viewBox="0 0 16 16">
+                            <path d="M8 12a3 3 0 0 0 3-3V4a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3z"/>
+                            <path d="M5 10a5 5 0 0 0 6 0v1a4 4 0 0 1-8 0v-1a.5.5 0 0 1 1 0v1a3 3 0 0 0 6 0v-1a.5.5 0 0 1 1 0v1a4 4 0 0 1-8 0v-1a.5.5 0 0 1 1 0z"/>
+                        </svg>
+                    </button>
+                    <button type="submit" class="btn btn-primary ms-2">Send</button>
                 </form>
             </section>
         </div>
