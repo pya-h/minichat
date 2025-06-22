@@ -19,7 +19,6 @@ if (!$otherUsername) {
   exit;
 }
 
-// Get target user ID
 $stmt = $pdo->prepare("SELECT id FROM users WHERE username = ?");
 $stmt->execute([$otherUsername]);
 $otherUser = $stmt->fetch();
@@ -31,7 +30,6 @@ if (!$otherUser) {
 }
 $otherUserId = $otherUser['id'];
 
-// Fetch messages between these two users ordered by created_at ASC
 $stmt = $pdo->prepare("
     SELECT id, sender_id, receiver_id, message, message_for_sender, message_type, voice_file_path, image_file_path, created_at
     FROM messages

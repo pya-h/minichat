@@ -16,7 +16,6 @@ if (!$message_id) {
     exit('Bad Request: Missing message ID');
 }
 
-// Fetch the message details to verify access
 $stmt = $pdo->prepare("SELECT sender_id, receiver_id, image_file_path FROM messages WHERE id = ? AND message_type = 'image'");
 $stmt->execute([$message_id]);
 $message = $stmt->fetch();
@@ -26,7 +25,6 @@ if (!$message) {
     exit('Not Found: Image message not found.');
 }
 
-// Verify if the current user is part of the conversation
 if ($message['sender_id'] != $user_id && $message['receiver_id'] != $user_id) {
     http_response_code(403);
     exit('Access Denied: You do not have permission to view this image.');
@@ -39,7 +37,6 @@ if (!file_exists($file_path)) {
     exit('Not Found: The image file is missing from the server.');
 }
 
-// Serve the file
 $finfo = finfo_open(FILEINFO_MIME_TYPE);
 $mime_type = finfo_file($finfo, $file_path);
 finfo_close($finfo);

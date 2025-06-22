@@ -21,5 +21,4 @@ if (!$user) {
     exit;
 }
 
-// Return raw PEM public key string as JSON
 echo json_encode(['publicKey' => $user['public_key']]);

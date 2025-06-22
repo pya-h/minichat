@@ -394,12 +394,43 @@ chatInput.addEventListener("keydown", (e) => {
     }
 });
 
-searchUserInput.addEventListener("change", () => {
+searchUserInput.addEventListener("change", async () => {
     const val = searchUserInput.value.trim();
     if (!val || val === CURRENT_USER) return;
-     
-    addUserToChatList(val);
-    searchUserInput.value = "";
+    
+    // Validate username format
+    if (!/^[a-zA-Z][a-zA-Z0-9_-]{2,}$/.test(val)) {
+        alert("Invalid username format. Username must start with a letter and contain only letters, numbers, hyphens, and underscores.");
+        searchUserInput.value = "";
+        return;
+    }
+    
+    // Show loading state
+    const originalPlaceholder = searchUserInput.placeholder;
+    searchUserInput.placeholder = "Checking user...";
+    searchUserInput.disabled = true;
+    
+    // Check if user exists before adding to chat list
+    try {
+        const response = await fetch(`api/check_user_exists.php?username=${encodeURIComponent(val)}`);
+        const data = await response.json();
+        
+        if (data.exists) {
+            addUserToChatList(val);
+            searchUserInput.value = "";
+        } else {
+            alert(`User "${val}" does not exist. Please check the username and try again.`);
+            searchUserInput.value = "";
+        }
+    } catch (error) {
+        console.error("Error checking user existence:", error);
+        alert("Error checking user existence. Please try again.");
+        searchUserInput.value = "";
+    } finally {
+        // Reset loading state
+        searchUserInput.placeholder = originalPlaceholder;
+        searchUserInput.disabled = false;
+    }
 });
 
 // Add real-time validation for search input
@@ -412,7 +443,9 @@ searchUserInput.addEventListener("input", function() {
     
     if (val && val !== CURRENT_USER) {
         if (/^[a-zA-Z][a-zA-Z0-9_-]{2,}$/.test(val)) {
-            this.classList.add("is-valid");
+            // Don't show green validation for format - only show neutral state
+            // since we need to check if user exists
+            this.classList.remove("is-invalid");
             if (feedback) feedback.style.display = "none";
         } else {
             this.classList.add("is-invalid");
