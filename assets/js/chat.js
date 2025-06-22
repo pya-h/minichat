@@ -269,9 +269,7 @@ window.playVoiceMessage = function (messageId) {
 
         audio.addEventListener("error", function (e) {
             console.error("Audio error:", e);
-            alert(
-                "Unable to load voice message. The audio file may be missing or corrupted."
-            );
+            showModal('Audio Error', 'Unable to load voice message. The audio file may be missing or corrupted.', 'error');
             playBtn.disabled = true;
             playBtn.style.opacity = "0.5";
         });
@@ -328,7 +326,7 @@ window.playVoiceMessage = function (messageId) {
 
         audio.play().catch(function (error) {
             console.error("Playback error:", error);
-            alert("Unable to play voice message. Please try again.");
+            showModal('Playback Error', 'Unable to play voice message. Please try again.', 'error');
         });
         playBtn.classList.add("playing");
         playBtn.innerHTML = `<i class="fas fa-pause"></i>`;
@@ -342,7 +340,7 @@ window.playVoiceMessage = function (messageId) {
 
 const sendMessage = async () => {
     if (!currentChatUser) {
-        alert("Select a user to chat with first");
+        showModal('No Chat Selected', 'Select a user to chat with first', 'warning');
         return;
     }
     const text = chatInput.value.trim();
@@ -375,7 +373,7 @@ const sendMessage = async () => {
         chatInput.value = "";
         loadMessages(currentChatUser);
     } catch (err) {
-        alert("Encryption/send error: " + err.message);
+        showModal('Send Error', 'Encryption/send error: ' + err.message, 'error');
     } finally {
         sendBtn.disabled = false;
         sendBtn.classList.remove("btn-pressed");
@@ -400,7 +398,7 @@ searchUserInput.addEventListener("change", async () => {
     
     // Validate username format
     if (!/^[a-zA-Z][a-zA-Z0-9_-]{2,}$/.test(val)) {
-        alert("Invalid username format. Username must start with a letter and contain only letters, numbers, hyphens, and underscores.");
+        showModal('Invalid Username', 'Username must start with a letter and contain only letters, numbers, hyphens, and underscores.', 'error');
         searchUserInput.value = "";
         return;
     }
@@ -419,12 +417,11 @@ searchUserInput.addEventListener("change", async () => {
             addUserToChatList(val);
             searchUserInput.value = "";
         } else {
-            alert(`User "${val}" does not exist. Please check the username and try again.`);
+            showModal('User Not Found', `User "${val}" does not exist. Please check the username and try again.`, 'warning');
             searchUserInput.value = "";
         }
     } catch (error) {
-        console.error("Error checking user existence:", error);
-        alert("Error checking user existence. Please try again.");
+        showModal('Connection Error', 'Error checking user existence. Please try again.', 'error');
         searchUserInput.value = "";
     } finally {
         // Reset loading state
@@ -460,7 +457,7 @@ addUserToChatList(CURRENT_USER);
 chatInput.disabled = true;
 
 fetchAndImportPrivateKey().catch((err) => {
-    alert("Error loading private key: " + err.message);
+    showModal('Key Error', 'Error loading private key: ' + err.message, 'error');
 });
 
 async function loadChatList() {
@@ -479,7 +476,6 @@ async function loadChatList() {
     }
 }
 
-// Call on page load
 loadChatList();
 
 setInterval(() => {
@@ -491,14 +487,12 @@ setInterval(() => {
     loadChatList();
 }, 5000);
 
-// --- Voice Message Logic ---
 voiceBtn.addEventListener("click", async () => {
     if (!currentChatUser) {
-        alert("Select a user to chat with first");
+        showModal('No Chat Selected', 'Select a user to chat with first', 'warning');
         return;
     }
     if (!isRecording) {
-        // Start recording
         try {
             const stream = await navigator.mediaDevices.getUserMedia({
                 audio: true,
@@ -506,7 +500,7 @@ voiceBtn.addEventListener("click", async () => {
             mediaRecorder = new MediaRecorder(stream);
             audioChunks = [];
             recordingStartTime = Date.now();
-            shouldSendRecording = true; // Reset flag
+            shouldSendRecording = true; 
 
             mediaRecorder.ondataavailable = (e) => {
                 if (e.data.size > 0) audioChunks.push(e.data);
@@ -519,9 +513,8 @@ voiceBtn.addEventListener("click", async () => {
                     });
                     await sendVoiceMessage(audioBlob);
                 }
-                // Stop all tracks to release microphone
+
                 stream.getTracks().forEach((track) => track.stop());
-                // Reset recording state
                 resetRecordingState();
             };
 
@@ -529,13 +522,11 @@ voiceBtn.addEventListener("click", async () => {
             isRecording = true;
             setRecordingState(true);
 
-            // Add recording indicator to chat
             addRecordingIndicator();
         } catch (err) {
-            alert("Microphone access denied or not available.");
+            showModal('Microphone Error', 'Microphone access denied or not available.', 'error');
         }
     } else {
-        // Stop recording
         stopRecording();
     }
 });
@@ -601,13 +592,11 @@ function cancelRecording() {
     }
 }
 
-// Make functions globally accessible
 window.stopRecording = stopRecording;
 window.cancelRecording = cancelRecording;
 
 async function sendVoiceMessage(audioBlob) {
     try {
-        // Show sending indicator
         const sendingIndicator = document.createElement("div");
         sendingIndicator.className = "message sent sending-indicator";
         sendingIndicator.innerHTML = `
@@ -638,49 +627,45 @@ async function sendVoiceMessage(audioBlob) {
         addUserToChatList(currentChatUser);
         loadMessages(currentChatUser);
     } catch (err) {
-        alert("Voice message send error: " + err.message);
+        showModal('Voice Send Error', 'Voice message send error: ' + err.message, 'error');
 
         const sendingIndicator = document.querySelector(".sending-indicator");
         if (sendingIndicator) sendingIndicator.remove();
     }
 }
 
-// --- Image Upload Logic ---
 imageUploadBtn.addEventListener("click", () => {
     if (!currentChatUser) {
-        alert("Select a user to chat with first");
+        showModal('No Chat Selected', 'Select a user to chat with first', 'warning');
         return;
     }
-    imageUploadInput.click(); // Trigger the hidden file input
+    imageUploadInput.click(); 
 });
 
 imageUploadInput.addEventListener("change", (e) => {
     const file = e.target.files[0];
     if (file) {
-        // Validate file type
         if (!file.type.startsWith("image/")) {
-            alert("Please select an image file.");
+            showModal('Invalid File Type', 'Please select an image file.', 'warning');
             e.target.value = null;
             return;
         }
 
-        // Validate file size (5MB limit)
         const maxSize = 5 * 1024 * 1024; // 5MB
         if (file.size > maxSize) {
-            alert("Image file size must be less than 5MB.");
+            showModal('File Too Large', 'Image file size must be less than 5MB.', 'warning');
             e.target.value = null;
             return;
         }
 
         sendImageMessage(file);
     }
-    // Reset the input so the user can select the same file again
+
     e.target.value = null;
 });
 
 async function sendImageMessage(imageFile) {
     try {
-        // Show sending indicator
         const sendingIndicator = document.createElement("div");
         sendingIndicator.className = "message sent sending-indicator";
         sendingIndicator.innerHTML = `
@@ -692,7 +677,6 @@ async function sendImageMessage(imageFile) {
         chatMessagesElem.appendChild(sendingIndicator);
         chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
 
-        // Disable the upload button
         imageUploadBtn.disabled = true;
 
         const formData = new FormData();
@@ -709,15 +693,13 @@ async function sendImageMessage(imageFile) {
         const json = await res.json();
         if (json.status !== "ok") throw new Error(json.error || "Send failed");
 
-        // Remove sending indicator
         sendingIndicator.remove();
 
         addUserToChatList(currentChatUser);
         loadMessages(currentChatUser);
     } catch (err) {
-        alert("Image send error: " + err.message);
+        showModal('Image Send Error', 'Image send error: ' + err.message, 'error');
 
-        // Remove sending indicator on error
         const sendingIndicator = document.querySelector(".sending-indicator");
         if (sendingIndicator) sendingIndicator.remove();
     } finally {

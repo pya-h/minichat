@@ -48,20 +48,16 @@ $user_id = $_SESSION['user_id'];
                     <form id="chatForm" class="d-flex w-100 align-items-center">
                         <textarea id="chatInput" class="form-control" placeholder="Type a message..." rows="1"></textarea>
                         
-                        <!-- Hidden file input for image uploads -->
                         <input type="file" id="imageUploadInput" accept="image/*" style="display: none;">
 
-                        <!-- Image Upload Button -->
                         <button type="button" id="imageUploadBtn" class="btn btn-secondary ms-2" title="Send an image">
                             <i class="fas fa-image"></i>
                         </button>
 
-                        <!-- Voice Message Button -->
                         <button type="button" id="voiceBtn" class="btn btn-secondary ms-2" title="Record voice message">
                             <i class="fas fa-microphone"></i>
                         </button>
 
-                        <!-- Send Button -->
                         <button type="submit" class="btn btn-primary ms-2">
                             <i class="fas fa-paper-plane"></i>
                         </button>
@@ -71,11 +67,32 @@ $user_id = $_SESSION['user_id'];
         </div>
     </div>
 
+    <div id="modalOverlay" class="modal-overlay" style="display: none;">
+        <div id="modalContainer" class="modal-container">
+            <div class="modal-header">
+                <div class="modal-icon">
+                    <i id="modalIcon" class="fas fa-info-circle"></i>
+                </div>
+                <h4 id="modalTitle" class="modal-title">Information</h4>
+                <button type="button" class="modal-close" onclick="closeModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p id="modalMessage">This is a modal message.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="closeModal()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <link href="assets/css/modal.css" rel="stylesheet" />
     <script>
         const CURRENT_USER = <?= json_encode($username) ?>;
         const CURRENT_USER_ID = <?= json_encode($user_id) ?>;
-
     </script>
+    <script src="assets/js/modal.js"></script>
     <script src="assets/js/bootstrap.bundle.min.js"></script>
     <script src="assets/js/crypto.js"></script>
     <script src="assets/js/chat.js"></script>
