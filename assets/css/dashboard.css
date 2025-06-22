@@ -49,6 +49,9 @@ nav.navbar {
   box-shadow: var(--shadow-sm);
   z-index: 10;
   transition: var(--transition-slow);
+  width: calc(100% - 2rem);
+  margin: 1rem auto 0;
+  border-radius: var(--border-radius) var(--border-radius) 0 0;
 }
 
 .navbar-brand {
@@ -89,7 +92,7 @@ nav.navbar {
   background: var(--surface-color);
   border-radius: 0 0 var(--border-radius) var(--border-radius);
   box-shadow: var(--shadow-md);
-  margin: 0 1rem 1rem;
+  margin: 0 auto 1rem;
   width: calc(100% - 2rem);
   transition: var(--transition-slow);
 }
@@ -335,6 +338,11 @@ nav.navbar {
 
 /* Responsive */
 @media (max-width: 992px) {
+  nav.navbar {
+    margin: 0;
+    width: 100%;
+    border-radius: 0;
+  }
   .chat-container {
     margin: 0;
     width: 100%;
