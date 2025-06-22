@@ -393,6 +393,19 @@ chatInput.addEventListener("keydown", (e) => {
     }
 });
 
+chatInput.addEventListener("input", () => {
+    // Automatically set text direction based on content
+    const text = chatInput.value;
+    // This regex checks for characters in the Arabic, Persian, etc. Unicode blocks.
+    const rtlRegex = /^[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF]/;
+    
+    if (rtlRegex.test(text)) {
+        chatInput.dir = 'rtl';
+    } else {
+        chatInput.dir = 'ltr';
+    }
+});
+
 searchUserInput.addEventListener("change", async () => {
     const val = searchUserInput.value.trim();
     if (!val || val === CURRENT_USER) return;

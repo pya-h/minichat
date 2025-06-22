@@ -27,7 +27,6 @@ unset($_SESSION['login_error']);
                 <i class="fas fa-comments"></i>
             </div>
             <h1 class="login-title">MiniChat</h1>
-            <p class="login-subtitle">Secure messaging with end-to-end encryption</p>
         </div>
 
         <?php if ($error): ?>

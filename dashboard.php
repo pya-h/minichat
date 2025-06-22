@@ -33,7 +33,6 @@ $user_id = $_SESSION['user_id'];
 
         <div class="chat-container">
             <aside class="sidebar">
-                <h4>Chats</h4>
                 <input type="text" id="searchUser" class="form-control mb-1" placeholder="Enter username to chat" />
                 <div id="searchUserFeedback" class="invalid-feedback" style="display: none; font-size: 0.875em;">
                     Invalid username format
