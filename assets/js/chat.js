@@ -16,6 +16,8 @@ const voiceBtn = document.getElementById('voiceBtn');
 let isRecording = false;
 let recordingStartTime = null;
 let shouldSendRecording = true; // Flag to control whether to send or cancel
+let audioContext = null;
+let activeAnalyser = null;
 
 function addUserToChatList(username) {
   if (chatUsers.has(username) || username === CURRENT_USER) return;
@@ -149,8 +151,9 @@ async function loadMessages(username, showLoading = false) {
 // Generate waveform bars for voice messages
 function generateWaveformBars() {
   const bars = [];
-  for (let i = 0; i < 20; i++) {
-    const height = Math.random() * 60 + 20; // Random height between 20-80px
+  const barCount = 30; // Increased for more detail
+  for (let i = 0; i < barCount; i++) {
+    const height = Math.random() * 60 + 15; // Random height
     bars.push(`<div class="waveform-bar" style="height: ${height}%"></div>`);
   }
   return bars.join('');
@@ -168,11 +171,29 @@ window.playVoiceMessage = function(messageId) {
   // Create audio element if it doesn't exist
   let audio = messageDiv.querySelector('audio');
   if (!audio) {
+    // Create and configure the AudioContext on first user interaction
+    if (!audioContext) {
+      audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
     audio = document.createElement('audio');
     audio.src = `api/get_voice_message.php?id=${messageId}`;
     audio.preload = 'metadata';
     audio.style.display = 'none'; // Hide the actual audio element
     messageDiv.appendChild(audio);
+    
+    // Web Audio API setup for this audio element
+    const source = audioContext.createMediaElementSource(audio);
+    const analyser = audioContext.createAnalyser();
+    analyser.fftSize = 256; // Controls the number of data points
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+    
+    source.connect(analyser);
+    analyser.connect(audioContext.destination);
+    
+    // Store analyser and data array for later use
+    messageDiv.audioAnalyser = { analyser, bufferLength, dataArray };
     
     // Add event listeners
     audio.addEventListener('loadedmetadata', function() {
@@ -192,6 +213,19 @@ window.playVoiceMessage = function(messageId) {
         const minutes = Math.floor(current / 60);
         const seconds = current % 60;
         durationDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        
+        // --- Live Progress Highlighting ---
+        const progress = audio.currentTime / audio.duration;
+        const waveformBars = messageDiv.querySelectorAll('.waveform-bar');
+        const playedBarsCount = Math.floor(progress * waveformBars.length);
+        
+        waveformBars.forEach((bar, index) => {
+          if (index < playedBarsCount) {
+            bar.classList.add('played');
+          } else {
+            bar.classList.remove('played');
+          }
+        });
       }
     });
     
@@ -200,6 +234,8 @@ window.playVoiceMessage = function(messageId) {
         <path fill="white" d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/>
       `;
       playBtn.classList.remove('playing');
+      // Mark all bars as played
+      messageDiv.querySelectorAll('.waveform-bar').forEach(bar => bar.classList.add('played'));
     });
     
     // Add error handling
@@ -210,17 +246,58 @@ window.playVoiceMessage = function(messageId) {
       playBtn.style.opacity = '0.5';
     });
   }
+
+  // --- From this point on, audio and audioAnalyser are guaranteed to exist ---
   
+  const { analyser, bufferLength, dataArray } = messageDiv.audioAnalyser;
+  const waveformBarsContainer = messageDiv.querySelector('.waveform-bars');
+
+  // --- Drawing loop for the waveform ---
+  function draw() {
+    if (audio.paused || audio.ended) {
+      if (activeAnalyser === analyser) activeAnalyser = null;
+      // Reset bars to idle state when paused
+      const bars = waveformBarsContainer.children;
+      for (let i = 0; i < bars.length; i++) {
+        bars[i].style.height = `20%`;
+      }
+      return;
+    }
+    
+    activeAnalyser = analyser;
+    requestAnimationFrame(draw);
+    
+    analyser.getByteFrequencyData(dataArray);
+    
+    const bars = waveformBarsContainer.children;
+    const barCount = bars.length;
+    
+    for (let i = 0; i < barCount; i++) {
+      // Scale the data to the bar height (0-100%)
+      const barHeight = Math.pow(dataArray[i] / 255, 2) * 100;
+      bars[i].style.height = `${Math.max(10, barHeight)}%`;
+    }
+  }
+
   if (audio.paused) {
     // Play audio
+    // Ensure the AudioContext is resumed
+    if (audioContext.state === 'suspended') {
+      audioContext.resume();
+    }
+    // Reset any previously played bars before starting
+    messageDiv.querySelectorAll('.waveform-bar').forEach(bar => bar.classList.remove('played'));
+    
     audio.play().catch(function(error) {
       console.error('Playback error:', error);
       alert('Unable to play voice message. Please try again.');
     });
     playIcon.innerHTML = `
-      <path fill="white" d="M6 3.5a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-.5.5H4a.5.5 0 0 1-.5-.5V4a.5.5 0 0 1 .5-.5h2zm3 0a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-.5-.5H7a.5.5 0 0 1-.5-.5V4a.5.5 0 0 1 .5-.5h2z"/>
+      <path fill="white" d="M6 3.5a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-.5.5H4a.5.5 0 0 1-.5-.5V4a.5.5 0 0 1 .5-.5h2zm3 0a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-.5.5H7a.5.5 0 0 1-.5-.5V4a.5.5 0 0 1 .5-.5h2z"/>
     `;
     playBtn.classList.add('playing');
+    // Start the drawing loop
+    draw();
   } else {
     // Pause audio
     audio.pause();
