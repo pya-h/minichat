@@ -168,9 +168,9 @@ body::after {
 }
 
 .input-icon {
-    position: absolute;
+    position: relative;
+    top: -35px;
     left: 1rem;
-    top: 50%;
     transform: translateY(-50%);
     color: #a0aec0;
     transition: all 0.3s ease;

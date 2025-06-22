@@ -26,7 +26,7 @@ function addUserToChatList(username) {
 
     const li = document.createElement("li");
     li.tabIndex = 0;
-    li.style.setProperty('--i', chatListElem.children.length);
+    li.style.setProperty("--i", chatListElem.children.length);
 
     const initials = username
         .split(" ")
@@ -35,6 +35,7 @@ function addUserToChatList(username) {
         .toUpperCase();
 
     li.innerHTML = `<span class="avatar">${initials}</span> <span>${username}</span><span id='user_${username}_loading' style="display:none" class="spinner-border spinner-border-sm text-primary ms-2" role="status" aria-hidden="true"></span>`;
+    li.id = `user_${username}`;
     li.classList.add("chat-user");
     li.addEventListener("click", () => selectChatUser(username));
     chatListElem.appendChild(li);
@@ -52,9 +53,16 @@ function selectChatUser(username) {
     if (currentChatUser?.length) {
         updateLoadingSpinnerState(currentChatUser, false);
     }
+
+    document
+        .getElementById(`user_${currentChatUser}`)
+        ?.classList.remove("selected-chat");
     currentChatUser = username;
-    chatWithElem.textContent = `Chat with ${username}`;
+    document
+        .getElementById(`user_${currentChatUser}`)
+        ?.classList.add("selected-chat");
     chatInput.disabled = false;
+    chatWithElem.textContent = username;
     chatInput.value = "";
     chatMessagesElem.innerHTML = "";
 
@@ -270,7 +278,11 @@ window.playVoiceMessage = function (messageId) {
 
         audio.addEventListener("error", function (e) {
             console.error("Audio error:", e);
-            showModal('Audio Error', 'Unable to load voice message. The audio file may be missing or corrupted.', 'error');
+            showModal(
+                "Audio Error",
+                "Unable to load voice message. The audio file may be missing or corrupted.",
+                "error"
+            );
             playBtn.disabled = true;
             playBtn.style.opacity = "0.5";
         });
@@ -327,7 +339,11 @@ window.playVoiceMessage = function (messageId) {
 
         audio.play().catch(function (error) {
             console.error("Playback error:", error);
-            showModal('Playback Error', 'Unable to play voice message. Please try again.', 'error');
+            showModal(
+                "Playback Error",
+                "Unable to play voice message. Please try again.",
+                "error"
+            );
         });
         playBtn.classList.add("playing");
         playBtn.innerHTML = `<i class="fas fa-pause"></i>`;
@@ -341,7 +357,11 @@ window.playVoiceMessage = function (messageId) {
 
 const sendMessage = async () => {
     if (!currentChatUser) {
-        showModal('No Chat Selected', 'Select a user to chat with first', 'warning');
+        showModal(
+            "No Chat Selected",
+            "Select a user to chat with first",
+            "warning"
+        );
         return;
     }
     const text = chatInput.value.trim();
@@ -374,7 +394,11 @@ const sendMessage = async () => {
         chatInput.value = "";
         loadMessages(currentChatUser);
     } catch (err) {
-        showModal('Send Error', 'Encryption/send error: ' + err.message, 'error');
+        showModal(
+            "Send Error",
+            "Encryption/send error: " + err.message,
+            "error"
+        );
     } finally {
         sendBtn.disabled = false;
         sendBtn.classList.remove("btn-pressed");
@@ -398,44 +422,58 @@ chatInput.addEventListener("input", () => {
     const text = chatInput.value;
     // This regex checks for characters in the Arabic, Persian, etc. Unicode blocks.
     const rtlRegex = /^[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF]/;
-    
+
     if (rtlRegex.test(text)) {
-        chatInput.dir = 'rtl';
+        chatInput.dir = "rtl";
     } else {
-        chatInput.dir = 'ltr';
+        chatInput.dir = "ltr";
     }
 });
 
 searchUserInput.addEventListener("change", async () => {
     const val = searchUserInput.value.trim();
     if (!val || val === CURRENT_USER) return;
-    
+
     // Validate username format
     if (!/^[a-zA-Z][a-zA-Z0-9_-]{2,}$/.test(val)) {
-        showModal('Invalid Username', 'Username must start with a letter and contain only letters, numbers, hyphens, and underscores.', 'error');
+        showModal(
+            "Invalid Username",
+            "Username must start with a letter and contain only letters, numbers, hyphens, and underscores.",
+            "error"
+        );
         searchUserInput.value = "";
         return;
     }
-    
+
     // Show loading state
     const originalPlaceholder = searchUserInput.placeholder;
     searchUserInput.placeholder = "Checking user...";
     searchUserInput.disabled = true;
-    
+
     // Check if user exists before adding to chat list
     try {
-        const response = await fetch(`api/check_user_exists.php?username=${encodeURIComponent(val)}`);
+        const response = await fetch(
+            `api/check_user_exists.php?username=${encodeURIComponent(val)}`
+        );
         const data = await response.json();
-        
+
         if (data.exists) {
             addUserToChatList(val);
             searchUserInput.value = "";
         } else {
-            showModal('User Not Found', `User "${val}" does not exist. Please check the username and try again.`, 'warning');
+            showModal(
+                "User Not Found",
+                `User "${val}" does not exist. Please check the username and try again.`,
+                "warning"
+            );
             searchUserInput.value = "";
         }
     } catch (error) {
-        showModal('Connection Error', 'Error checking user existence. Please try again.', 'error');
+        showModal(
+            "Connection Error",
+            "Error checking user existence. Please try again.",
+            "error"
+        );
         searchUserInput.value = "";
     } finally {
         // Reset loading state
@@ -445,13 +483,13 @@ searchUserInput.addEventListener("change", async () => {
 });
 
 // Add real-time validation for search input
-searchUserInput.addEventListener("input", function() {
+searchUserInput.addEventListener("input", function () {
     const val = this.value.trim();
     const feedback = document.getElementById("searchUserFeedback");
-    
+
     // Remove any existing validation classes
     this.classList.remove("is-invalid", "is-valid");
-    
+
     if (val && val !== CURRENT_USER) {
         if (/^[a-zA-Z][a-zA-Z0-9_-]{2,}$/.test(val)) {
             // Don't show green validation for format - only show neutral state
@@ -467,11 +505,14 @@ searchUserInput.addEventListener("input", function() {
     }
 });
 
-addUserToChatList(CURRENT_USER);
 chatInput.disabled = true;
-
+chatInput.textContent = "Select someone to chat...";
 fetchAndImportPrivateKey().catch((err) => {
-    showModal('Key Error', 'Error loading private key: ' + err.message, 'error');
+    showModal(
+        "Key Error",
+        "Error loading private key: " + err.message,
+        "error"
+    );
 });
 
 async function loadChatList() {
@@ -503,7 +544,11 @@ setInterval(() => {
 
 voiceBtn.addEventListener("click", async () => {
     if (!currentChatUser) {
-        showModal('No Chat Selected', 'Select a user to chat with first', 'warning');
+        showModal(
+            "No Chat Selected",
+            "Select a user to chat with first",
+            "warning"
+        );
         return;
     }
     if (!isRecording) {
@@ -514,7 +559,7 @@ voiceBtn.addEventListener("click", async () => {
             mediaRecorder = new MediaRecorder(stream);
             audioChunks = [];
             recordingStartTime = Date.now();
-            shouldSendRecording = true; 
+            shouldSendRecording = true;
 
             mediaRecorder.ondataavailable = (e) => {
                 if (e.data.size > 0) audioChunks.push(e.data);
@@ -538,7 +583,11 @@ voiceBtn.addEventListener("click", async () => {
 
             addRecordingIndicator();
         } catch (err) {
-            showModal('Microphone Error', 'Microphone access denied or not available.', 'error');
+            showModal(
+                "Microphone Error",
+                "Microphone access denied or not available.",
+                "error"
+            );
         }
     } else {
         stopRecording();
@@ -641,7 +690,11 @@ async function sendVoiceMessage(audioBlob) {
         addUserToChatList(currentChatUser);
         loadMessages(currentChatUser);
     } catch (err) {
-        showModal('Voice Send Error', 'Voice message send error: ' + err.message, 'error');
+        showModal(
+            "Voice Send Error",
+            "Voice message send error: " + err.message,
+            "error"
+        );
 
         const sendingIndicator = document.querySelector(".sending-indicator");
         if (sendingIndicator) sendingIndicator.remove();
@@ -650,24 +703,36 @@ async function sendVoiceMessage(audioBlob) {
 
 imageUploadBtn.addEventListener("click", () => {
     if (!currentChatUser) {
-        showModal('No Chat Selected', 'Select a user to chat with first', 'warning');
+        showModal(
+            "No Chat Selected",
+            "Select a user to chat with first",
+            "warning"
+        );
         return;
     }
-    imageUploadInput.click(); 
+    imageUploadInput.click();
 });
 
 imageUploadInput.addEventListener("change", (e) => {
     const file = e.target.files[0];
     if (file) {
         if (!file.type.startsWith("image/")) {
-            showModal('Invalid File Type', 'Please select an image file.', 'warning');
+            showModal(
+                "Invalid File Type",
+                "Please select an image file.",
+                "warning"
+            );
             e.target.value = null;
             return;
         }
 
         const maxSize = 5 * 1024 * 1024; // 5MB
         if (file.size > maxSize) {
-            showModal('File Too Large', 'Image file size must be less than 5MB.', 'warning');
+            showModal(
+                "File Too Large",
+                "Image file size must be less than 5MB.",
+                "warning"
+            );
             e.target.value = null;
             return;
         }
@@ -712,7 +777,11 @@ async function sendImageMessage(imageFile) {
         addUserToChatList(currentChatUser);
         loadMessages(currentChatUser);
     } catch (err) {
-        showModal('Image Send Error', 'Image send error: ' + err.message, 'error');
+        showModal(
+            "Image Send Error",
+            "Image send error: " + err.message,
+            "error"
+        );
 
         const sendingIndicator = document.querySelector(".sending-indicator");
         if (sendingIndicator) sendingIndicator.remove();
