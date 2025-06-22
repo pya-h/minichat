@@ -18,7 +18,7 @@ if (empty($data['publicKey'])) {
 }
 
 $userId = $_SESSION['user_id'];
-$publicKeyJson = json_encode($data['publicKey']); // Double-encode for storage as JSON string
+$publicKeyJson = json_encode($data['publicKey']);
 
 try {
     $stmt = $pdo->prepare("UPDATE users SET public_key = ? WHERE id = ?");

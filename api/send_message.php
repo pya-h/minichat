@@ -32,7 +32,6 @@ if (!$targetUser) {
     exit;
 }
 
-// Save encrypted text message
 $stmt = $pdo->prepare("INSERT INTO messages (sender_id, receiver_id, message, message_for_sender, message_type) VALUES (?, ?, ?, ?, 'text')");
 $stmt->execute([
     $userId,

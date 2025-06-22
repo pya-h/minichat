@@ -45,7 +45,6 @@ async function importRsaPrivateKey(pem) {
 const publicKeyCache = new Map();
 let privateKey = null;
 
-// Fetch and import own private key (call once on dashboard load)
 async function fetchAndImportPrivateKey() {
   const res = await fetch("api/get_private_key.php");
   if (!res.ok) throw new Error("Failed to fetch private key");
@@ -55,7 +54,6 @@ async function fetchAndImportPrivateKey() {
   return privateKey;
 }
 
-// Get public key of another user
 async function getPublicKey(username) {
   if (publicKeyCache.has(username)) return publicKeyCache.get(username);
 
@@ -71,7 +69,6 @@ async function getPublicKey(username) {
   return cryptoKey;
 }
 
-// Encrypt message
 async function encryptMessage(message, recipientPublicKey) {
   const encoder = new TextEncoder();
   const encoded = encoder.encode(message);
@@ -83,7 +80,6 @@ async function encryptMessage(message, recipientPublicKey) {
   return btoa(String.fromCharCode(...new Uint8Array(encrypted)));
 }
 
-// Decrypt message with private key
 async function decryptMessage(base64Encrypted) {
   if (!privateKey) throw new Error("Private key not loaded");
   const binary = atob(base64Encrypted);

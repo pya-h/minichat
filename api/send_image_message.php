@@ -3,7 +3,6 @@ session_start();
 
 require_once '../includes/db.php';
 
-// Check for post_max_size breach, which can cause $_POST and $_FILES to be empty.
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($_POST) && empty($_FILES) && $_SERVER['CONTENT_LENGTH'] > 0) {
     http_response_code(400);
     $post_max_size = ini_get('post_max_size');
@@ -27,16 +26,13 @@ $message_for_recipient = $_POST['message'] ?? null;
 $message_for_sender = $_POST['message_for_sender'] ?? null;
 $image_file = $_FILES['image_file'] ?? null;
 
-// --- Safer Validation Logic ---
 
-// 1. Check for missing text fields
 if (!$target_username) {
     http_response_code(400);
     echo json_encode(['status' => 'error', 'error' => 'A required field was missing from the request.']);
     exit;
 }
 
-// 2. Check for file upload errors
 if (!isset($image_file) || $image_file['error'] !== UPLOAD_ERR_OK) {
     http_response_code(400);
     
@@ -71,7 +67,6 @@ if (!isset($image_file) || $image_file['error'] !== UPLOAD_ERR_OK) {
     exit;
 }
 
-// Find receiver ID
 $stmt = $pdo->prepare("SELECT id FROM users WHERE username = ?");
 $stmt->execute([$target_username]);
 $receiver = $stmt->fetch();
@@ -83,14 +78,12 @@ if (!$receiver) {
 }
 $receiver_id = $receiver['id'];
 
-// --- File Handling ---
 $upload_dir = '../uploads/images/';
-// Create directory if it doesn't exist
+
 if (!is_dir($upload_dir)) {
     mkdir($upload_dir, 0777, true);
 }
 
-// Validate file type and size
 $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 if (!in_array($image_file['type'], $allowed_types)) {
     http_response_code(400);
@@ -104,13 +97,11 @@ if ($image_file['size'] > 5 * 1024 * 1024) { // 5 MB limit
     exit;
 }
 
-// Generate a unique filename
 $file_extension = pathinfo($image_file['name'], PATHINFO_EXTENSION);
 $unique_filename = uniqid('img_', true) . '.' . $file_extension;
 $upload_path = $upload_dir . $unique_filename;
 
 if (move_uploaded_file($image_file['tmp_name'], $upload_path)) {
-    // File uploaded successfully, save to DB
     try {
         $stmt = $pdo->prepare(
             "INSERT INTO messages (sender_id, receiver_id, message, message_for_sender, message_type, image_file_path) 
@@ -121,13 +112,12 @@ if (move_uploaded_file($image_file['tmp_name'], $upload_path)) {
             $receiver_id,
             $message_for_recipient,
             $message_for_sender,
-            'uploads/images/' . $unique_filename // Store relative path
+            'uploads/images/' . $unique_filename
         ]);
 
         echo json_encode(['status' => 'ok', 'message' => 'Image sent successfully']);
     } catch (PDOException $e) {
         http_response_code(500);
-        // Potentially remove the uploaded file if DB insert fails
         unlink($upload_path); 
         echo json_encode(['status' => 'error', 'error' => 'Database error: ' . $e->getMessage()]);
     }

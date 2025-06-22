@@ -306,7 +306,6 @@ nav.navbar {
   border-radius: 50%;
 }
 
-/* Custom Voice Player */
 .voice-player-container {
   display: flex;
   align-items: center;
@@ -673,19 +672,18 @@ nav.navbar {
   color: #212529;
 }
 
-/* --- STYLES FOR IMAGE MESSAGES --- */
 .message.is-image-message {
   background: transparent;
   padding: 0;
   box-shadow: none;
-  max-width: 45%; /* Images can be a bit wider */
-  white-space: normal; /* Override pre-wrap to fix layout */
+  max-width: 45%;
+  white-space: normal;
 }
 
 .message.is-image-message a {
   display: block;
-  border-radius: 18px; /* Match bubble shape */
-  overflow: hidden; /* Keep image inside rounded corners */
+  border-radius: 18px; 
+  overflow: hidden;
   box-shadow: 0 1px 4px rgb(0 0 0 / 0.1);
   transition: box-shadow 0.2s ease;
 }
@@ -696,25 +694,23 @@ nav.navbar {
 
 .message-image {
   max-width: 100%;
-  display: block; /* Remove bottom space under image */
+  display: block;
   height: auto;
   cursor: pointer;
   transition: transform 0.2s ease;
-  border-radius: 18px; /* Match the link border radius */
+  border-radius: 18px;
 }
 
 .message-image:hover {
   transform: scale(1.02);
 }
 
-/* Responsive image messages */
 @media (max-width: 767.98px) {
   .message.is-image-message {
-    max-width: 70%; /* Wider on mobile for better visibility */
+    max-width: 70%;
   }
 }
 
-/* Image loading and error states */
 .message.is-image-message .image-error {
   background: #f8f9fa;
   border: 1px solid #dee2e6;
@@ -724,4 +720,3 @@ nav.navbar {
   color: #6c757d;
   font-size: 0.9rem;
 }
-/* --- END IMAGE STYLES --- */

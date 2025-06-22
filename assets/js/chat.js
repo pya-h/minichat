@@ -11,13 +11,12 @@ let currentChatUser = null;
 let recentMessage = null;
 const chatUsers = new Set();
 
-// --- Voice Message Logic ---
 let mediaRecorder = null;
 let audioChunks = [];
 const voiceBtn = document.getElementById("voiceBtn");
 let isRecording = false;
 let recordingStartTime = null;
-let shouldSendRecording = true; // Flag to control whether to send or cancel
+let shouldSendRecording = true;
 let audioContext = null;
 let activeAnalyser = null;
 
@@ -26,9 +25,8 @@ function addUserToChatList(username) {
     chatUsers.add(username);
 
     const li = document.createElement("li");
-    li.tabIndex = 0; // for keyboard accessibility
+    li.tabIndex = 0;
 
-    // Generate initials from username
     const initials = username
         .split(" ")
         .map((n) => n[0])
@@ -130,12 +128,12 @@ async function loadMessages(username, showLoading = false) {
                 div.classList.add("is-image-message");
 
                 div.innerHTML = `
-          <a href="api/get_image.php?id=${msg.id}" target="_blank" title="View full image">
-            <img src="api/get_image.php?id=${msg.id}" class="message-image" alt="Image from ${msg.sender_id}" 
-                 onload="this.parentNode.parentNode.parentNode.scrollTop = this.parentNode.parentNode.parentNode.scrollHeight"
-                 onerror="this.parentNode.innerHTML='<div style=\\'padding: 20px; text-align: center; color: #6c757d;\\'>Image not available</div>'">
-          </a>
-        `;
+                <a href="api/get_image.php?id=${msg.id}" target="_blank" title="View full image">
+                    <img src="api/get_image.php?id=${msg.id}" class="message-image" alt="Image from ${msg.sender_id}" 
+                        onload="this.parentNode.parentNode.parentNode.scrollTop = this.parentNode.parentNode.parentNode.scrollHeight"
+                        onerror="this.parentNode.innerHTML='<div style=\\'padding: 20px; text-align: center; color: #6c757d;\\'>Image not available</div>'">
+                </a>
+                `;
                 // onload is a bit of a hack to scroll down once the image loads
                 // onerror provides fallback for failed image loads
             } else {
@@ -177,9 +175,9 @@ async function loadMessages(username, showLoading = false) {
 // Generate waveform bars for voice messages
 function generateWaveformBars() {
     const bars = [];
-    const barCount = 30; // Increased for more detail
+    const barCount = 30;
     for (let i = 0; i < barCount; i++) {
-        const height = Math.random() * 60 + 15; // Random height
+        const height = Math.random() * 60 + 15;
         bars.push(
             `<div class="waveform-bar" style="height: ${height}%"></div>`
         );
@@ -187,7 +185,6 @@ function generateWaveformBars() {
     return bars.join("");
 }
 
-// Global function to play voice messages
 window.playVoiceMessage = function (messageId) {
     const messageDiv = document.querySelector(
         `[data-message-id="${messageId}"]`
@@ -197,10 +194,8 @@ window.playVoiceMessage = function (messageId) {
     const playBtn = messageDiv.querySelector(".voice-play-btn");
     const durationDisplay = messageDiv.querySelector(".voice-duration-display");
 
-    // Create audio element if it doesn't exist
     let audio = messageDiv.querySelector("audio");
     if (!audio) {
-        // Create and configure the AudioContext on first user interaction
         if (!audioContext) {
             audioContext = new (window.AudioContext ||
                 window.webkitAudioContext)();
@@ -212,7 +207,6 @@ window.playVoiceMessage = function (messageId) {
         audio.style.display = "none"; // Hide the actual audio element
         messageDiv.appendChild(audio);
 
-        // Web Audio API setup for this audio element
         const source = audioContext.createMediaElementSource(audio);
         const analyser = audioContext.createAnalyser();
         analyser.fftSize = 256; // Controls the number of data points
@@ -225,7 +219,6 @@ window.playVoiceMessage = function (messageId) {
         // Store analyser and data array for later use
         messageDiv.audioAnalyser = { analyser, bufferLength, dataArray };
 
-        // Add event listeners
         audio.addEventListener("loadedmetadata", function () {
             if (isFinite(audio.duration)) {
                 const duration = Math.round(audio.duration);
@@ -248,7 +241,6 @@ window.playVoiceMessage = function (messageId) {
                     .toString()
                     .padStart(2, "0")}`;
 
-                // --- Live Progress Highlighting ---
                 const progress = audio.currentTime / audio.duration;
                 const waveformBars =
                     messageDiv.querySelectorAll(".waveform-bar");
@@ -285,20 +277,18 @@ window.playVoiceMessage = function (messageId) {
         });
     }
 
-
     const { analyser, dataArray } = messageDiv.audioAnalyser;
     const waveformBarsContainer = messageDiv.querySelector(".waveform-bars");
 
     function draw() {
         if (audio.paused || audio.ended) {
-          
             if (activeAnalyser === analyser) activeAnalyser = null;
 
             const bars = waveformBarsContainer.children;
             for (let i = 0; i < bars.length; i++) {
                 bars[i].style.height = `20%`;
             }
-            
+
             return;
         }
 
@@ -343,7 +333,7 @@ window.playVoiceMessage = function (messageId) {
         playBtn.classList.add("playing");
         playBtn.innerHTML = `<i class="fas fa-pause"></i>`;
         draw();
-      } else {
+    } else {
         audio.pause();
         playBtn.classList.remove("playing");
         playBtn.innerHTML = `<i class="fas fa-play"></i>`;
@@ -358,7 +348,6 @@ const sendMessage = async () => {
     const text = chatInput.value.trim();
     if (!text) return;
 
-    // Animate send button
     const sendBtn = chatForm.querySelector('button[type="submit"]');
     sendBtn.disabled = true;
     sendBtn.classList.add("btn-pressed");
@@ -415,7 +404,6 @@ searchUserInput.addEventListener("change", () => {
 addUserToChatList(CURRENT_USER);
 chatInput.disabled = true;
 
-// On page load: fetch private key for decryption
 fetchAndImportPrivateKey().catch((err) => {
     alert("Error loading private key: " + err.message);
 });

@@ -2,7 +2,6 @@
 session_start();
 require_once '../includes/db.php';
 
-// Check if POST request
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: ../index.php');
     exit;
@@ -22,7 +21,6 @@ $stmt->execute([$username]);
 $user = $stmt->fetch();
 
 if (!$user) {
-    // Register new user on login attempt with keypair
     $config = [
         "private_key_type" => OPENSSL_KEYTYPE_RSA,
         "private_key_bits" => 2048,

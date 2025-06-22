@@ -12,7 +12,6 @@ if (!isset($_SESSION['user_id'])) {
 
 $userId = $_SESSION['user_id'];
 
-// Get distinct users that current user chatted with (sender or receiver)
 $stmt = $pdo->prepare("
   SELECT DISTINCT u.username
   FROM users u

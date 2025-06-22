@@ -47,7 +47,6 @@ if ($voiceFile['size'] > $maxSize) {
     exit;
 }
 
-// Find target user
 $stmt = $pdo->prepare("SELECT id FROM users WHERE username = ?");
 $stmt->execute([$target]);
 $targetUser = $stmt->fetch();
@@ -58,7 +57,6 @@ if (!$targetUser) {
     exit;
 }
 
-// Create upload directories if they don't exist
 $uploadsDir = '../uploads';
 $voiceMessagesDir = '../uploads/voice_messages';
 
@@ -78,14 +76,12 @@ if (!is_dir($voiceMessagesDir)) {
     }
 }
 
-// Ensure directories are writable
 if (!is_writable($voiceMessagesDir)) {
     http_response_code(500);
     echo json_encode(['error' => 'Voice messages directory is not writable']);
     exit;
 }
 
-// Generate unique filename
 $uniqueFilename = uniqid('voice_', true) . '.' . $fileExtension;
 $uploadPath = $voiceMessagesDir . '/' . $uniqueFilename;
 
@@ -95,7 +91,6 @@ if (!move_uploaded_file($voiceFile['tmp_name'], $uploadPath)) {
     exit;
 }
 
-// Save encrypted voice message
 $stmt = $pdo->prepare("INSERT INTO messages (sender_id, receiver_id, message, message_for_sender, message_type, voice_file_path) VALUES (?, ?, ?, ?, 'voice', ?)");
 $stmt->execute([
     $userId,
