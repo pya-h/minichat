@@ -12,7 +12,7 @@ if (!isset($_SESSION['user_id'])) {
 
 $userId = $_SESSION['user_id'];
 
-$stmt = $pdo->prepare("
+$stmt = $pdo->prepare('
   SELECT DISTINCT u.username
   FROM users u
   JOIN (
@@ -21,7 +21,7 @@ $stmt = $pdo->prepare("
     SELECT receiver_id as user_id FROM messages WHERE sender_id = ?
   ) m ON u.id = m.user_id
   WHERE u.id != ?
-");
+');
 $stmt->execute([$userId, $userId, $userId]);
 $users = $stmt->fetchAll(PDO::FETCH_COLUMN);
 

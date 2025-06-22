@@ -10,7 +10,7 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-$stmt = $pdo->prepare("SELECT private_key FROM users WHERE id = ?");
+$stmt = $pdo->prepare('SELECT private_key FROM users WHERE id = ?');
 $stmt->execute([$_SESSION['user_id']]);
 $user = $stmt->fetch();
 

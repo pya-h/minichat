@@ -38,4 +38,4 @@ header('Content-Type: ' . $mimeType);
 header('Content-Length: ' . filesize($fullPath));
 header('Content-Disposition: inline; filename="' . basename($voiceFile) . '"');
 readfile($fullPath);
-exit; 
+exit;

@@ -15,7 +15,6 @@ body {
     overflow: hidden;
 }
 
-/* Animated background elements */
 body::before,
 body::after {
     content: "";

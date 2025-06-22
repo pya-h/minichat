@@ -11,7 +11,7 @@ if (!$username) {
     exit;
 }
 
-$stmt = $pdo->prepare("SELECT public_key FROM users WHERE username = ?");
+$stmt = $pdo->prepare('SELECT public_key FROM users WHERE username = ?');
 $stmt->execute([$username]);
 $user = $stmt->fetch();
 

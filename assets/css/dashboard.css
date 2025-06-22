@@ -23,7 +23,6 @@
     --transition-slow: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Dark mode styles */
 @media (prefers-color-scheme: dark) {
     :root {
         --background-color: #18191a;
@@ -35,7 +34,6 @@
     }
 }
 
-/* Full height layout */
 html,
 body,
 #app {
@@ -50,7 +48,6 @@ body,
     flex-direction: column;
 }
 
-/* Navbar */
 nav.navbar {
     background: var(--surface-color);
     box-shadow: var(--shadow-sm);
@@ -91,7 +88,6 @@ nav.navbar {
     color: var(--primary-color);
 }
 
-/* Container */
 .chat-container {
     flex: 1;
     display: flex;
@@ -104,7 +100,6 @@ nav.navbar {
     transition: var(--transition-slow);
 }
 
-/* Sidebar (chat list + search) */
 .sidebar {
     width: 300px;
     border-right: 1px solid var(--border-color);
@@ -135,7 +130,6 @@ nav.navbar {
         color-mix(in srgb, var(--secondary-color) 20%, transparent);
 }
 
-/* Chat list styling */
 .chat-list {
     list-style: none;
     padding: 0;
@@ -182,7 +176,6 @@ nav.navbar {
     transform: scale(1.02) translateX(5px);
 }
 
-/* User avatar circle (just initials) */
 .chat-list li .avatar {
     width: 40px;
     height: 40px;
@@ -204,7 +197,6 @@ nav.navbar {
     color: var(--primary-color);
 }
 
-/* Chat area */
 .chat-area {
     flex: 1;
     display: flex;
@@ -212,7 +204,6 @@ nav.navbar {
     background: var(--background-color);
 }
 
-/* Sticky chat header */
 .chat-header {
     padding: 1rem 1.5rem;
     border-bottom: 1px solid var(--border-color);
@@ -226,7 +217,6 @@ nav.navbar {
     transition: var(--transition-slow);
 }
 
-/* Messages container */
 .chat-messages {
     flex: 1;
     padding: 1.5rem;
@@ -246,7 +236,6 @@ nav.navbar {
     background: transparent;
 }
 
-/* Individual messages */
 .message {
     max-width: 60%;
     margin-bottom: 1rem;
@@ -272,7 +261,6 @@ nav.navbar {
     border-bottom-left-radius: 4px;
 }
 
-/* Chat input area */
 .chat-input {
     display: flex;
     align-items: center;
@@ -342,7 +330,6 @@ nav.navbar {
     transform: scale(0.95);
 }
 
-/* Animations */
 @keyframes message-in {
     from {
         opacity: 0;
@@ -365,7 +352,6 @@ nav.navbar {
     }
 }
 
-/* Responsive */
 @media (max-width: 992px) {
     nav.navbar {
         margin: 0;
@@ -397,7 +383,7 @@ nav.navbar {
         scrollbar-width: none; /* For Firefox */
     }
     .chat-list-wrapper::-webkit-scrollbar {
-        display: none; /* For Chrome, Safari, and Opera */
+        display: none;
     }
     .chat-list {
         display: flex;
@@ -406,7 +392,7 @@ nav.navbar {
         width: max-content;
     }
     .chat-list li {
-        animation: none; /* Disable list animation on mobile for performance */
+        animation: none;
     }
     .chat-area {
         height: 100%;
@@ -563,7 +549,6 @@ nav.navbar {
     flex-shrink: 0;
 }
 
-/* Recording Indicator */
 .recording-indicator {
     position: fixed;
     bottom: 100px;
@@ -643,7 +628,6 @@ nav.navbar {
     }
 }
 
-/* Voice Message Sending Indicator */
 .voice-message-sending {
     display: flex;
     align-items: center;
@@ -654,7 +638,6 @@ nav.navbar {
     opacity: 0.8;
 }
 
-/* Image Message Sending Indicator */
 .image-message-sending {
     display: flex;
     align-items: center;
@@ -665,7 +648,6 @@ nav.navbar {
     opacity: 0.8;
 }
 
-/* Voice Button Styles */
 #voiceBtn {
     transition: all 0.3s ease;
 }
@@ -692,13 +674,11 @@ nav.navbar {
     color: inherit;
 }
 
-/* Ensure all button icons are visible */
 .btn svg {
     fill: currentColor;
     color: inherit;
 }
 
-/* Responsive voice message styles */
 @media (max-width: 767.98px) {
     .voice-message {
         padding: 0.5rem;
@@ -765,42 +745,34 @@ nav.navbar {
     color: #212529;
 }
 
-/* --- NEW STYLES FOR UNIFIED VOICE BUBBLES --- */
-/* Remove default bubble styles from voice messages */
 .message.is-voice-message {
     background: transparent;
     padding: 0;
     box-shadow: none;
 }
 
-/* Make the player the new bubble */
 .message.is-voice-message .voice-player-container {
     border-radius: 18px; /* Standard bubble shape */
     box-shadow: 0 1px 4px rgb(0 0 0 / 0.1);
 }
 
-/* Style for SENT voice bubble */
 .message.is-voice-message.sent .voice-player-container {
     background: #0d6efd; /* Blue background */
 }
 
-/* Style for RECEIVED voice bubble */
 .message.is-voice-message.received .voice-player-container {
     background: white; /* White background */
 }
 
-/* Remove the old rule that made the sent player transparent */
 .message.sent .voice-player-container {
     background: initial; /* Reset property */
     padding-left: initial; /* Reset property */
 }
 
-/* Nudge the play button on sent messages for better spacing */
 .message.is-voice-message.sent .voice-play-btn {
     margin-left: 8px;
 }
 
-/* --- INCREASED CONTRAST FOR RECEIVED VOICE MESSAGES --- */
 .message.received .voice-play-btn {
     background: rgba(0, 0, 0, 0.15);
     color: #212529;

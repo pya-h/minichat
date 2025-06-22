@@ -21,7 +21,6 @@ if (!$target) {
     exit;
 }
 
-// Validate file upload
 if (!isset($_FILES['voice_file']) || $_FILES['voice_file']['error'] !== UPLOAD_ERR_OK) {
     http_response_code(400);
     echo json_encode(['error' => 'Voice file upload failed']);
@@ -31,9 +30,8 @@ if (!isset($_FILES['voice_file']) || $_FILES['voice_file']['error'] !== UPLOAD_E
 $voiceFile = $_FILES['voice_file'];
 $allowedTypes = ['audio/wav', 'audio/mp3', 'audio/ogg', 'audio/webm'];
 $allowedExtensions = ['wav', 'mp3', 'ogg', 'webm'];
-$maxSize = 10 * 1024 * 1024; // 10MB
+$maxSize = 10 * 1024 * 1024;  // 10MB
 
-// Validate file type and extension
 $fileExtension = strtolower(pathinfo($voiceFile['name'], PATHINFO_EXTENSION));
 if (!in_array($voiceFile['type'], $allowedTypes) || !in_array($fileExtension, $allowedExtensions)) {
     http_response_code(400);
@@ -47,7 +45,7 @@ if ($voiceFile['size'] > $maxSize) {
     exit;
 }
 
-$stmt = $pdo->prepare("SELECT id FROM users WHERE username = ?");
+$stmt = $pdo->prepare('SELECT id FROM users WHERE username = ?');
 $stmt->execute([$target]);
 $targetUser = $stmt->fetch();
 
@@ -102,4 +100,4 @@ $stmt->execute([
 
 $messageId = $pdo->lastInsertId();
 
-echo json_encode(['status' => 'ok', 'message_id' => $messageId, 'file_path' => $uniqueFilename]); 
+echo json_encode(['status' => 'ok', 'message_id' => $messageId, 'file_path' => $uniqueFilename]);

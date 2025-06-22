@@ -218,14 +218,13 @@ window.playVoiceMessage = function (messageId) {
 
         const source = audioContext.createMediaElementSource(audio);
         const analyser = audioContext.createAnalyser();
-        analyser.fftSize = 256; // Controls the number of data points
+        analyser.fftSize = 256;
         const bufferLength = analyser.frequencyBinCount;
         const dataArray = new Uint8Array(bufferLength);
 
         source.connect(analyser);
         analyser.connect(audioContext.destination);
 
-        // Store analyser and data array for later use
         messageDiv.audioAnalyser = { analyser, bufferLength, dataArray };
 
         audio.addEventListener("loadedmetadata", function () {
@@ -418,9 +417,7 @@ chatInput.addEventListener("keydown", (e) => {
 });
 
 chatInput.addEventListener("input", () => {
-    // Automatically set text direction based on content
     const text = chatInput.value;
-    // This regex checks for characters in the Arabic, Persian, etc. Unicode blocks.
     const rtlRegex = /^[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF]/;
 
     if (rtlRegex.test(text)) {
@@ -434,7 +431,6 @@ searchUserInput.addEventListener("change", async () => {
     const val = searchUserInput.value.trim();
     if (!val || val === CURRENT_USER) return;
 
-    // Validate username format
     if (!/^[a-zA-Z][a-zA-Z0-9_-]{2,}$/.test(val)) {
         showModal(
             "Invalid Username",
@@ -445,12 +441,10 @@ searchUserInput.addEventListener("change", async () => {
         return;
     }
 
-    // Show loading state
     const originalPlaceholder = searchUserInput.placeholder;
     searchUserInput.placeholder = "Checking user...";
     searchUserInput.disabled = true;
 
-    // Check if user exists before adding to chat list
     try {
         const response = await fetch(
             `api/check_user_exists.php?username=${encodeURIComponent(val)}`
@@ -476,24 +470,19 @@ searchUserInput.addEventListener("change", async () => {
         );
         searchUserInput.value = "";
     } finally {
-        // Reset loading state
         searchUserInput.placeholder = originalPlaceholder;
         searchUserInput.disabled = false;
     }
 });
 
-// Add real-time validation for search input
 searchUserInput.addEventListener("input", function () {
     const val = this.value.trim();
     const feedback = document.getElementById("searchUserFeedback");
 
-    // Remove any existing validation classes
     this.classList.remove("is-invalid", "is-valid");
 
     if (val && val !== CURRENT_USER) {
         if (/^[a-zA-Z][a-zA-Z0-9_-]{2,}$/.test(val)) {
-            // Don't show green validation for format - only show neutral state
-            // since we need to check if user exists
             this.classList.remove("is-invalid");
             if (feedback) feedback.style.display = "none";
         } else {

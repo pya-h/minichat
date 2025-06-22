@@ -21,8 +21,7 @@ if (!$target || !$messageEncryptedForRecipient || !$messageEncryptedForSender) {
     exit;
 }
 
-// Find target user
-$stmt = $pdo->prepare("SELECT id FROM users WHERE username = ?");
+$stmt = $pdo->prepare('SELECT id FROM users WHERE username = ?');
 $stmt->execute([$target]);
 $targetUser = $stmt->fetch();
 
@@ -42,4 +41,4 @@ $stmt->execute([
 
 $messageId = $pdo->lastInsertId();
 
-echo json_encode(['status' => 'ok', 'message_id' => $messageId]); 
+echo json_encode(['status' => 'ok', 'message_id' => $messageId]);

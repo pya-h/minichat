@@ -7,7 +7,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($_POST) && empty($_FILES) && 
     http_response_code(400);
     $post_max_size = ini_get('post_max_size');
     echo json_encode([
-        'status' => 'error', 
+        'status' => 'error',
         'error' => "The uploaded data exceeds the server's configured limit (post_max_size is {$post_max_size}). Please upload a smaller file."
     ]);
     exit;
@@ -19,13 +19,11 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-
 $sender_id = $_SESSION['user_id'];
 $target_username = $_POST['target'] ?? null;
 $message_for_recipient = $_POST['message'] ?? null;
 $message_for_sender = $_POST['message_for_sender'] ?? null;
 $image_file = $_FILES['image_file'] ?? null;
-
 
 if (!$target_username) {
     http_response_code(400);
@@ -35,7 +33,7 @@ if (!$target_username) {
 
 if (!isset($image_file) || $image_file['error'] !== UPLOAD_ERR_OK) {
     http_response_code(400);
-    
+
     $error_message = 'An unknown file upload error occurred.';
     if (isset($image_file['error'])) {
         switch ($image_file['error']) {
@@ -62,12 +60,12 @@ if (!isset($image_file) || $image_file['error'] !== UPLOAD_ERR_OK) {
     } else {
         $error_message = 'No file was sent with the request or the file was too large.';
     }
-    
+
     echo json_encode(['status' => 'error', 'error' => $error_message]);
     exit;
 }
 
-$stmt = $pdo->prepare("SELECT id FROM users WHERE username = ?");
+$stmt = $pdo->prepare('SELECT id FROM users WHERE username = ?');
 $stmt->execute([$target_username]);
 $receiver = $stmt->fetch();
 
@@ -91,7 +89,7 @@ if (!in_array($image_file['type'], $allowed_types)) {
     exit;
 }
 
-if ($image_file['size'] > 5 * 1024 * 1024) { // 5 MB limit
+if ($image_file['size'] > 5 * 1024 * 1024) {  // 5 MB limit
     http_response_code(400);
     echo json_encode(['status' => 'error', 'error' => 'Image file is too large. Max 5MB allowed.']);
     exit;
@@ -108,7 +106,7 @@ if (move_uploaded_file($image_file['tmp_name'], $upload_path)) {
              VALUES (?, ?, ?, ?, 'image', ?)"
         );
         $stmt->execute([
-            $sender_id, 
+            $sender_id,
             $receiver_id,
             $message_for_recipient,
             $message_for_sender,
@@ -118,7 +116,7 @@ if (move_uploaded_file($image_file['tmp_name'], $upload_path)) {
         echo json_encode(['status' => 'ok', 'message' => 'Image sent successfully']);
     } catch (PDOException $e) {
         http_response_code(500);
-        unlink($upload_path); 
+        unlink($upload_path);
         echo json_encode(['status' => 'error', 'error' => 'Database error: ' . $e->getMessage()]);
     }
 } else {

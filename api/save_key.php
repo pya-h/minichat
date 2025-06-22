@@ -21,7 +21,7 @@ $userId = $_SESSION['user_id'];
 $publicKeyJson = json_encode($data['publicKey']);
 
 try {
-    $stmt = $pdo->prepare("UPDATE users SET public_key = ? WHERE id = ?");
+    $stmt = $pdo->prepare('UPDATE users SET public_key = ? WHERE id = ?');
     $stmt->execute([$publicKeyJson, $userId]);
     echo json_encode(['status' => 'ok']);
 } catch (Exception $e) {

@@ -44,4 +44,4 @@ finfo_close($finfo);
 header('Content-Type: ' . $mime_type);
 header('Content-Length: ' . filesize($file_path));
 readfile($file_path);
-exit; 
+exit;

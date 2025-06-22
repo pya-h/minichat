@@ -2,17 +2,17 @@
 session_start();
 require_once '../includes/db.php';
 
-function isValidUsername($username) {
+function isValidUsername($username)
+{
     return preg_match('/^[a-zA-Z][a-zA-Z0-9_-]{2,}$/', $username);
 }
 
-// Function to validate password strength
-function isValidPassword($password) {
-    // Password must be at least 8 characters containing at least a digit, a letter, and at least one special character
-    return strlen($password) >= 8 && 
-           preg_match('/[0-9]/', $password) && 
-           preg_match('/[a-zA-Z]/', $password) && 
-           preg_match('/[^a-zA-Z0-9]/', $password);
+function isValidPassword($password)
+{
+    return strlen($password) >= 8 &&
+        preg_match('/[0-9]/', $password) &&
+        preg_match('/[a-zA-Z]/', $password) &&
+        preg_match('/[^a-zA-Z0-9]/', $password);
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -29,39 +29,36 @@ if (!$username || !$password) {
     exit;
 }
 
-// Validate username format
 if (!isValidUsername($username)) {
     $_SESSION['login_error'] = 'Username must be at least 3 characters, starting a letter & contains only letters, numbers, hyphens, and underscores';
     header('Location: ../index.php');
     exit;
 }
 
-// Validate password strength for new users
-$stmt = $pdo->prepare("SELECT * FROM users WHERE username = ?");
+$stmt = $pdo->prepare('SELECT * FROM users WHERE username = ?');
 $stmt->execute([$username]);
 $user = $stmt->fetch();
 
 if (!$user) {
-    // This is a new user, validate password strength
     if (!isValidPassword($password)) {
         $_SESSION['login_error'] = 'Password must be at least 8 characters and contain at least one digit, one letter, and one special character';
         header('Location: ../index.php');
         exit;
     }
-    
+
     $config = [
-        "private_key_type" => OPENSSL_KEYTYPE_RSA,
-        "private_key_bits" => 2048,
+        'private_key_type' => OPENSSL_KEYTYPE_RSA,
+        'private_key_bits' => 2048,
     ];
 
     $res = openssl_pkey_new($config);
     openssl_pkey_export($res, $privatePem);
     $details = openssl_pkey_get_details($res);
-    $publicPem = $details["key"];
+    $publicPem = $details['key'];
 
     $passwordHash = password_hash($password, PASSWORD_DEFAULT);
 
-    $stmt = $pdo->prepare("INSERT INTO users (username, password_hash, public_key, private_key) VALUES (?, ?, ?, ?)");
+    $stmt = $pdo->prepare('INSERT INTO users (username, password_hash, public_key, private_key) VALUES (?, ?, ?, ?)');
     $stmt->execute([$username, $passwordHash, $publicPem, $privatePem]);
 
     $userId = $pdo->lastInsertId();

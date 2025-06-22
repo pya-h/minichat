@@ -19,7 +19,7 @@ if (!$otherUsername) {
   exit;
 }
 
-$stmt = $pdo->prepare("SELECT id FROM users WHERE username = ?");
+$stmt = $pdo->prepare('SELECT id FROM users WHERE username = ?');
 $stmt->execute([$otherUsername]);
 $otherUser = $stmt->fetch();
 
@@ -30,12 +30,12 @@ if (!$otherUser) {
 }
 $otherUserId = $otherUser['id'];
 
-$stmt = $pdo->prepare("
+$stmt = $pdo->prepare('
     SELECT id, sender_id, receiver_id, message, message_for_sender, message_type, voice_file_path, image_file_path, created_at
     FROM messages
     WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)
     ORDER BY created_at ASC
-");
+');
 $stmt->execute([$userId, $otherUserId, $otherUserId, $userId]);
 $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
