@@ -397,8 +397,30 @@ chatInput.addEventListener("keydown", (e) => {
 searchUserInput.addEventListener("change", () => {
     const val = searchUserInput.value.trim();
     if (!val || val === CURRENT_USER) return;
+     
     addUserToChatList(val);
     searchUserInput.value = "";
+});
+
+// Add real-time validation for search input
+searchUserInput.addEventListener("input", function() {
+    const val = this.value.trim();
+    const feedback = document.getElementById("searchUserFeedback");
+    
+    // Remove any existing validation classes
+    this.classList.remove("is-invalid", "is-valid");
+    
+    if (val && val !== CURRENT_USER) {
+        if (/^[a-zA-Z][a-zA-Z0-9_-]{2,}$/.test(val)) {
+            this.classList.add("is-valid");
+            if (feedback) feedback.style.display = "none";
+        } else {
+            this.classList.add("is-invalid");
+            if (feedback) feedback.style.display = "block";
+        }
+    } else {
+        if (feedback) feedback.style.display = "none";
+    }
 });
 
 addUserToChatList(CURRENT_USER);
