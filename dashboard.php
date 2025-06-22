@@ -21,11 +21,13 @@ $user_id = $_SESSION['user_id'];
 
 <body>
     <div id="app">
-        <nav class="navbar navbar-expand-lg navbar-light bg-light px-3">
+        <nav class="navbar navbar-expand-lg px-3">
             <a class="navbar-brand" href="#">MiniChat</a>
-            <div class="ms-auto">
-                <span class="me-3">Logged in as <strong><?= htmlspecialchars($username) ?></strong></span>
-                <a href="api/logout.php" class="btn btn-outline-secondary btn-sm">Logout</a>
+            <div class="ms-auto d-flex align-items-center">
+                <span class="me-3 logged-in-as">Logged in as <strong><?= htmlspecialchars($username) ?></strong></span>
+                <a href="api/logout.php" class="btn btn-logout btn-sm">
+                    <i class="fas fa-sign-out-alt me-1"></i>Logout
+                </a>
             </div>
         </nav>
 
@@ -36,7 +38,9 @@ $user_id = $_SESSION['user_id'];
                 <div id="searchUserFeedback" class="invalid-feedback" style="display: none; font-size: 0.875em;">
                     Invalid username format
                 </div>
-                <ul class="chat-list" id="chatList"></ul>
+                <div class="chat-list-wrapper">
+                    <ul class="chat-list" id="chatList"></ul>
+                </div>
             </aside>
 
             <section class="chat-area d-flex flex-column">

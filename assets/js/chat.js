@@ -26,6 +26,7 @@ function addUserToChatList(username) {
 
     const li = document.createElement("li");
     li.tabIndex = 0;
+    li.style.setProperty('--i', chatListElem.children.length);
 
     const initials = username
         .split(" ")
