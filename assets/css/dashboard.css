@@ -138,7 +138,7 @@ nav.navbar {
 
 /* Individual messages */
 .message {
-  max-width: 70%;
+  max-width: 40%;
   margin-bottom: 1rem;
   padding: 0.5rem 1rem;
   border-radius: 18px;
@@ -242,6 +242,9 @@ nav.navbar {
   .chat-area {
     height: calc(100vh - 200px - 56px); /* minus sidebar height & navbar */
   }
+  .message {
+    max-width: 80%;
+  }
 }
 
 /* Voice Message Styles */
@@ -301,7 +304,7 @@ nav.navbar {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.5rem;
+  padding: 0.7rem 0.8rem;
   background: rgba(255, 255, 255, 0.05);
   border-radius: 8px;
 }
@@ -332,13 +335,22 @@ nav.navbar {
 }
 
 .voice-play-btn svg {
-  fill: currentColor;
+  fill: white !important;
   width: 20px;
   height: 20px;
+  color: white !important;
+}
+
+.voice-play-btn svg path {
+  fill: white !important;
 }
 
 .voice-play-btn:disabled svg {
   opacity: 0.5;
+}
+
+.voice-play-btn:disabled svg path {
+  fill: rgba(255, 255, 255, 0.5) !important;
 }
 
 .voice-waveform {
@@ -402,8 +414,12 @@ nav.navbar {
 
 .recording-content .btn {
   font-size: 0.8rem;
-  padding: 0.25rem 0.5rem;
+  font-weight: 500;
+  padding: 0.35rem 0.7rem;
   border-width: 1px;
+  border-radius: 20px;
+  line-height: 1;
+  transition: all 0.2s ease-in-out;
 }
 
 .recording-content .btn-outline-light {
@@ -533,4 +549,100 @@ nav.navbar {
     width: 45px;
     height: 45px;
   }
+}
+
+.message.received .voice-play-btn {
+  background: rgba(0, 0, 0, 0.15);
+  color: #212529;
+}
+
+.message.received .voice-play-btn:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.message.received .voice-play-btn.playing {
+  background: #28a745;
+  color: white;
+}
+
+.message.received .voice-play-btn svg path {
+  fill: #212529;
+}
+
+.message.received .voice-play-btn.playing svg path {
+  fill: white;
+}
+
+.message.received .waveform-bar {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.message.received .voice-duration-display {
+  color: #212529;
+}
+
+/* --- NEW STYLES FOR UNIFIED VOICE BUBBLES --- */
+/* Remove default bubble styles from voice messages */
+.message.is-voice-message {
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+}
+
+/* Make the player the new bubble */
+.message.is-voice-message .voice-player-container {
+  border-radius: 18px; /* Standard bubble shape */
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.1);
+}
+
+/* Style for SENT voice bubble */
+.message.is-voice-message.sent .voice-player-container {
+  background: #0d6efd; /* Blue background */
+}
+
+/* Style for RECEIVED voice bubble */
+.message.is-voice-message.received .voice-player-container {
+  background: white; /* White background */
+}
+
+/* Remove the old rule that made the sent player transparent */
+.message.sent .voice-player-container {
+  background: initial; /* Reset property */
+  padding-left: initial; /* Reset property */
+}
+
+/* Nudge the play button on sent messages for better spacing */
+.message.is-voice-message.sent .voice-play-btn {
+  margin-left: 8px;
+}
+
+/* --- INCREASED CONTRAST FOR RECEIVED VOICE MESSAGES --- */
+.message.received .voice-play-btn {
+  background: rgba(0, 0, 0, 0.15);
+  color: #212529;
+}
+
+.message.received .voice-play-btn:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.message.received .voice-play-btn.playing {
+  background: #28a745;
+  color: white;
+}
+
+.message.received .voice-play-btn svg path {
+  fill: #212529;
+}
+
+.message.received .voice-play-btn.playing svg path {
+  fill: white;
+}
+
+.message.received .waveform-bar {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.message.received .voice-duration-display {
+  color: #212529;
 }

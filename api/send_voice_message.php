@@ -58,9 +58,36 @@ if (!$targetUser) {
     exit;
 }
 
+// Create upload directories if they don't exist
+$uploadsDir = '../uploads';
+$voiceMessagesDir = '../uploads/voice_messages';
+
+if (!is_dir($uploadsDir)) {
+    if (!mkdir($uploadsDir, 0755, true)) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Failed to create uploads directory']);
+        exit;
+    }
+}
+
+if (!is_dir($voiceMessagesDir)) {
+    if (!mkdir($voiceMessagesDir, 0755, true)) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Failed to create voice messages directory']);
+        exit;
+    }
+}
+
+// Ensure directories are writable
+if (!is_writable($voiceMessagesDir)) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Voice messages directory is not writable']);
+    exit;
+}
+
 // Generate unique filename
 $uniqueFilename = uniqid('voice_', true) . '.' . $fileExtension;
-$uploadPath = '../uploads/voice_messages/' . $uniqueFilename;
+$uploadPath = $voiceMessagesDir . '/' . $uniqueFilename;
 
 if (!move_uploaded_file($voiceFile['tmp_name'], $uploadPath)) {
     http_response_code(500);

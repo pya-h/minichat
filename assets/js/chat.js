@@ -78,7 +78,7 @@ async function loadMessages(username, showLoading = false) {
     if (!data.messages.length) {
       chatMessagesElem.innerHTML = '';
       chatMessagesElem.textContent = 'No messages yet.';
-      loadingSpinnerElement.style = 'display: none';
+      if(loadingSpinnerElement) loadingSpinnerElement.style = 'display: none';
       return;
     }
 
@@ -86,7 +86,7 @@ async function loadMessages(username, showLoading = false) {
       const lastMessage = data.messages[data.messages.length - 1];
       lastMessage.created_at = new Date(lastMessage.created_at);
       if (lastMessage.created_at <= recentMessage.created_at) {
-        loadingSpinnerElement.style = 'display: none';
+        if(loadingSpinnerElement) loadingSpinnerElement.style = 'display: none';
         return;
       }
     }
@@ -98,35 +98,28 @@ async function loadMessages(username, showLoading = false) {
       div.classList.add(msg.sender_id == CURRENT_USER_ID ? 'sent' : 'received');
       
       if (msg.message_type === 'voice' && msg.voice_file_path) {
-        // Voice message with improved UI
+        // Add a special class for voice messages to customize the bubble
+        div.classList.add('is-voice-message');
+        
+        // The voice player itself will become the message bubble
         div.innerHTML = `
-          <div class="voice-message">
-            <div class="voice-message-header">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-mic-fill me-2" viewBox="0 0 16 16">
-                <path d="M5 3.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-.5.5h-5a.5.5 0 0 1-.5-.5v-5z"/>
-                <path d="M0 4.5A1.5 1.5 0 0 1 1.5 3h13A1.5 1.5 0 0 1 16 4.5v8a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-8zM1.5 4a.5.5 0 0 0-.5.5v8a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-8a.5.5 0 0 0-.5-.5h-13z"/>
+          <div class="voice-player-container">
+            <button class="voice-play-btn" onclick="playVoiceMessage(${msg.id})">
+              <svg class="play-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="white" viewBox="0 0 16 16">
+                <path fill="white" d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/>
               </svg>
-              <span class="voice-message-label">Voice Message</span>
+            </button>
+            <div class="voice-waveform">
+              <div class="waveform-bars">
+                ${generateWaveformBars()}
+              </div>
             </div>
-            <audio controls class="voice-audio-player" preload="metadata">
-              <source src="api/get_voice_message.php?id=${msg.id}" type="audio/webm">
-              Your browser does not support the audio element.
-            </audio>
+            <div class="voice-duration-display">--:--</div>
           </div>
         `;
-        
-        // Add duration display when audio loads
-        const audio = div.querySelector('audio');
-        audio.addEventListener('loadedmetadata', function() {
-          const duration = Math.round(audio.duration);
-          const durationSpan = document.createElement('span');
-          durationSpan.className = 'voice-duration';
-          durationSpan.textContent = ` (${duration}s)`;
-          div.querySelector('.voice-message-label').appendChild(durationSpan);
-        });
-        
+        div.setAttribute('data-message-id', msg.id);
       } else {
-        // Text message - check if it's a voice message placeholder
+        // Text message
         let decryptedText = '[Unable to decrypt message]';
         try {
           if (msg.sender_id == CURRENT_USER_ID) {
@@ -137,55 +130,7 @@ async function loadMessages(username, showLoading = false) {
         } catch (e) {
           decryptedText = '[Decryption error]';
         }
-        
-        // Check if this is a voice message placeholder
-        if (decryptedText === '[Voice message]' || decryptedText.includes('[Voice message]')) {
-          // Only create voice player if this message actually has a voice file
-          if (msg.message_type === 'voice' && msg.voice_file_path) {
-            // Create a voice message player for this message
-            div.innerHTML = `
-              <div class="voice-message">
-                <div class="voice-message-header">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-mic-fill me-2" viewBox="0 0 16 16">
-                    <path d="M5 3.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-.5.5h-5a.5.5 0 0 1-.5-.5v-5z"/>
-                    <path d="M0 4.5A1.5 1.5 0 0 1 1.5 3h13A1.5 1.5 0 0 1 16 4.5v8a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-8zM1.5 4a.5.5 0 0 0-.5.5v8a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-8a.5.5 0 0 0-.5-.5h-13z"/>
-                  </svg>
-                  <span class="voice-message-label">Voice Message</span>
-                </div>
-                <div class="voice-player-container">
-                  <button class="voice-play-btn" onclick="playVoiceMessage(${msg.id})">
-                    <svg class="play-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-                      <path d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/>
-                    </svg>
-                  </button>
-                  <div class="voice-waveform">
-                    <div class="waveform-bars">
-                      ${generateWaveformBars()}
-                    </div>
-                  </div>
-                  <div class="voice-duration-display">--:--</div>
-                </div>
-              </div>
-            `;
-            
-            // Store message ID for audio playback
-            div.setAttribute('data-message-id', msg.id);
-          } else {
-            // Show placeholder text for voice messages without files
-            div.innerHTML = `
-              <div class="voice-message-placeholder">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-mic-fill me-2" viewBox="0 0 16 16">
-                  <path d="M5 3.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-.5.5h-5a.5.5 0 0 1-.5-.5v-5z"/>
-                  <path d="M0 4.5A1.5 1.5 0 0 1 1.5 3h13A1.5 1.5 0 0 1 16 4.5v8a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5v-8zM1.5 4a.5.5 0 0 0-.5.5v8a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-8a.5.5 0 0 0-.5-.5h-13z"/>
-                </svg>
-                <span>Voice message (unavailable)</span>
-              </div>
-            `;
-          }
-        } else {
-          // Regular text message
-          div.textContent = decryptedText;
-        }
+        div.textContent = decryptedText;
       }
       chatMessagesElem.appendChild(div);
     }
@@ -226,27 +171,33 @@ window.playVoiceMessage = function(messageId) {
     audio = document.createElement('audio');
     audio.src = `api/get_voice_message.php?id=${messageId}`;
     audio.preload = 'metadata';
+    audio.style.display = 'none'; // Hide the actual audio element
     messageDiv.appendChild(audio);
     
     // Add event listeners
     audio.addEventListener('loadedmetadata', function() {
-      const duration = Math.round(audio.duration);
-      const minutes = Math.floor(duration / 60);
-      const seconds = duration % 60;
-      durationDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+      if (isFinite(audio.duration)) {
+        const duration = Math.round(audio.duration);
+        const minutes = Math.floor(duration / 60);
+        const seconds = duration % 60;
+        durationDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+      } else {
+        durationDisplay.textContent = '??:??';
+      }
     });
     
     audio.addEventListener('timeupdate', function() {
-      const current = Math.round(audio.currentTime);
-      const duration = Math.round(audio.duration);
-      const minutes = Math.floor(current / 60);
-      const seconds = current % 60;
-      durationDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+       if (isFinite(audio.duration)) {
+        const current = Math.round(audio.currentTime);
+        const minutes = Math.floor(current / 60);
+        const seconds = current % 60;
+        durationDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+      }
     });
     
     audio.addEventListener('ended', function() {
       playIcon.innerHTML = `
-        <path d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/>
+        <path fill="white" d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/>
       `;
       playBtn.classList.remove('playing');
     });
@@ -267,14 +218,14 @@ window.playVoiceMessage = function(messageId) {
       alert('Unable to play voice message. Please try again.');
     });
     playIcon.innerHTML = `
-      <path d="M6 3.5a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-.5.5H4a.5.5 0 0 1-.5-.5V4a.5.5 0 0 1 .5-.5h2zm3 0a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-.5.5H7a.5.5 0 0 1-.5-.5V4a.5.5 0 0 1 .5-.5h2z"/>
+      <path fill="white" d="M6 3.5a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-.5.5H4a.5.5 0 0 1-.5-.5V4a.5.5 0 0 1 .5-.5h2zm3 0a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-.5-.5H7a.5.5 0 0 1-.5-.5V4a.5.5 0 0 1 .5-.5h2z"/>
     `;
     playBtn.classList.add('playing');
   } else {
     // Pause audio
     audio.pause();
     playIcon.innerHTML = `
-      <path d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/>
+      <path fill="white" d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/>
     `;
     playBtn.classList.remove('playing');
   }
@@ -430,7 +381,7 @@ function setRecordingState(recording) {
     voiceBtn.innerHTML = `
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-mic" viewBox="0 0 16 16">
         <path d="M8 12a3 3 0 0 0 3-3V4a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3z"/>
-        <path d="M5 10a5 5 0 0 0 6 0v1a4 4 0 0 1-8 0v-1a.5.5 0 0 1 1 0v1a3 3 0 0 0 6 0v-1a.5.5 0 0 1 1 0v1a4 4 0 0 1-8 0v-1a.5.5 0 0 1 1 0z"/>
+        <path d="M5 10a5 5 0 0 0 6 0v1a4 4 0 0 1-8 0v-1a.5.5 0 0 1 1 0v1a3 3 0 0 0 6 0v-1a.5.5 0 0 1 1 0z"/>
       </svg>
     `;
     voiceBtn.title = 'Record voice message';
@@ -468,14 +419,14 @@ function removeRecordingIndicator() {
 
 function stopRecording() {
   if (isRecording && mediaRecorder) {
-    shouldSendRecording = true; // Ensure we send the recording
+    shouldSendRecording = true;
     mediaRecorder.stop();
   }
 }
 
 function cancelRecording() {
   if (isRecording && mediaRecorder) {
-    shouldSendRecording = false; // Prevent sending the recording
+    shouldSendRecording = false;
     mediaRecorder.stop();
   }
 }
@@ -519,7 +470,6 @@ async function sendVoiceMessage(audioBlob) {
     const json = await res.json();
     if (json.status !== 'ok') throw new Error(json.error || 'Send failed');
     
-    // Remove sending indicator
     sendingIndicator.remove();
     
     addUserToChatList(currentChatUser);
@@ -527,7 +477,7 @@ async function sendVoiceMessage(audioBlob) {
     
   } catch (err) {
     alert('Voice message send error: ' + err.message);
-    // Remove sending indicator on error
+
     const sendingIndicator = document.querySelector('.sending-indicator');
     if (sendingIndicator) sendingIndicator.remove();
   }
