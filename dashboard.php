@@ -15,6 +15,7 @@ $user_id = $_SESSION['user_id'];
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>MiniChat Dashboard</title>
     <link href="assets/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="assets/css/fontawesome.min.css" rel="stylesheet" />
     <link href="assets/css/dashboard.css" rel="stylesheet" />
 </head>
 
@@ -49,21 +50,18 @@ $user_id = $_SESSION['user_id'];
 
                         <!-- Image Upload Button -->
                         <button type="button" id="imageUploadBtn" class="btn btn-secondary ms-2" title="Send an image">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-paperclip" viewBox="0 0 16 16">
-                                <path d="M4.5 3a2.5 2.5 0 0 1 5 0v9a1.5 1.5 0 0 1-3 0V5a.5.5 0 0 1 1 0v7a.5.5 0 0 0 1 0V3a1.5 1.5 0 0 0-3 0v9a2.5 2.5 0 0 0 5 0V5a.5.5 0 0 1 1 0v7a3.5 3.5 0 1 1-7 0V3z"/>
-                            </svg>
+                            <i class="fas fa-image"></i>
                         </button>
 
                         <!-- Voice Message Button -->
                         <button type="button" id="voiceBtn" class="btn btn-secondary ms-2" title="Record voice message">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-mic" viewBox="0 0 16 16">
-                                <path d="M8 12a3 3 0 0 0 3-3V4a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3z"/>
-                                <path d="M5 10a5 5 0 0 0 6 0v1a4 4 0 0 1-8 0v-1a.5.5 0 0 1 1 0v1a3 3 0 0 0 6 0v-1a.5.5 0 0 1 1 0z"/>
-                            </svg>
+                            <i class="fas fa-microphone"></i>
                         </button>
 
                         <!-- Send Button -->
-                        <button type="submit" class="btn btn-primary ms-2">Send</button>
+                        <button type="submit" class="btn btn-primary ms-2">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
                 </form>
                 </div>
             </section>

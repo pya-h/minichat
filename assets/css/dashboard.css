@@ -147,6 +147,7 @@ nav.navbar {
   animation: fadeInUp 0.3s ease forwards;
   word-wrap: break-word;
   box-shadow: 0 1px 4px rgb(0 0 0 / 0.1);
+  white-space: pre-wrap;
 }
 .message.sent {
   background: #0d6efd;
@@ -184,12 +185,18 @@ nav.navbar {
   box-shadow: 0 0 10px #0d6efd88;
 }
 .chat-input button {
-  margin-left: 1rem;
-  border-radius: 25px;
-  padding: 0 1.5rem;
+  margin-left: 0.5rem;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  padding: 0;
   font-weight: 600;
   font-size: 1rem;
   transition: background-color 0.3s ease, transform 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 .chat-input button:active {
   transform: scale(0.95);
@@ -497,13 +504,6 @@ nav.navbar {
 
 /* Voice Button Styles */
 #voiceBtn {
-  border-radius: 50%;
-  width: 50px;
-  height: 50px;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   transition: all 0.3s ease;
 }
 
@@ -561,7 +561,7 @@ nav.navbar {
     font-size: 0.9rem;
   }
   
-  #voiceBtn {
+  .chat-input button {
     width: 45px;
     height: 45px;
   }
@@ -679,6 +679,7 @@ nav.navbar {
   padding: 0;
   box-shadow: none;
   max-width: 45%; /* Images can be a bit wider */
+  white-space: normal; /* Override pre-wrap to fix layout */
 }
 
 .message.is-image-message a {
