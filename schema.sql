@@ -2,7 +2,9 @@ CREATE TABLE users (
   id INT AUTO_INCREMENT PRIMARY KEY,
   username VARCHAR(255) UNIQUE NOT NULL,
   password_hash TEXT NOT NULL,
-  public_key TEXT
+  public_key TEXT,
+  private_key TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE messages (
@@ -11,7 +13,7 @@ CREATE TABLE messages (
   receiver_id INT NOT NULL,
   message TEXT,
   message_for_sender TEXT,
-  message_type ENUM('text', 'voice', 'image') DEFAULT 'text',
+  message_type ENUM('text', 'voice', 'image', 'video', 'file') DEFAULT 'text',
   voice_file_path VARCHAR(255),
   image_file_path VARCHAR(255),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
