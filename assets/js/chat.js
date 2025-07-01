@@ -20,6 +20,34 @@ let shouldSendRecording = true;
 let audioContext = null;
 let activeAnalyser = null;
 
+// Handle viewport height changes on mobile (keyboard appearance)
+let initialViewportHeight = window.innerHeight;
+
+window.addEventListener('resize', () => {
+    if (window.innerWidth <= 767.98) {
+        const heightDifference = initialViewportHeight - window.innerHeight;
+        if (Math.abs(heightDifference) > 150) {
+            // Keyboard appeared/disappeared, adjust chat container
+            const chatContainer = document.querySelector('.chat-container');
+            if (chatContainer) {
+                chatContainer.style.height = `calc(100vh - 60px)`;
+            }
+            
+            // Re-scroll to bottom after a short delay
+            setTimeout(() => {
+                if (chatMessagesElem) {
+                    chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
+                }
+            }, 300);
+        }
+    }
+});
+
+// Store initial viewport height
+window.addEventListener('load', () => {
+    initialViewportHeight = window.innerHeight;
+});
+
 function addUserToChatList(username) {
     if (chatUsers.has(username) || username === CURRENT_USER) return;
     chatUsers.add(username);
@@ -172,6 +200,11 @@ async function loadMessages(username, showLoading = false) {
 
         chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
         recentMessage = data.messages?.[data.messages.length - 1];
+        
+        // Ensure proper scrolling on mobile devices
+        setTimeout(() => {
+            chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
+        }, 100);
     } catch (err) {
         chatMessagesElem.textContent = "Error loading messages";
     }
@@ -621,6 +654,11 @@ function addRecordingIndicator() {
   `;
     chatMessagesElem.appendChild(indicator);
     chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
+    
+    // Ensure proper scrolling on mobile devices
+    setTimeout(() => {
+        chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
+    }, 100);
 }
 
 function removeRecordingIndicator() {
@@ -659,6 +697,11 @@ async function sendVoiceMessage(audioBlob) {
     `;
         chatMessagesElem.appendChild(sendingIndicator);
         chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
+
+        // Ensure proper scrolling on mobile devices
+        setTimeout(() => {
+            chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
+        }, 100);
 
         const formData = new FormData();
         formData.append("target", currentChatUser);
@@ -744,6 +787,11 @@ async function sendImageMessage(imageFile) {
     `;
         chatMessagesElem.appendChild(sendingIndicator);
         chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
+
+        // Ensure proper scrolling on mobile devices
+        setTimeout(() => {
+            chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
+        }, 100);
 
         imageUploadBtn.disabled = true;
 

@@ -35,17 +35,21 @@
 }
 
 html,
-body,
-#app {
+body {
     height: 100%;
     margin: 0;
-    font-family: var(--font-family);
+    padding: 0;
     background: var(--background-color);
+    font-family: var(--font-family);
+    color: var(--text-color);
     transition: var(--transition-slow);
 }
+
 #app {
     display: flex;
     flex-direction: column;
+    height: 100vh;
+    min-height: 100vh;
 }
 
 nav.navbar {
@@ -366,16 +370,19 @@ nav.navbar {
 }
 
 @media (max-width: 767.98px) {
+    nav.navbar {
+        margin: 0;
+        width: 100%;
+        border-radius: 0;
+        flex-shrink: 0;
+    }
     .chat-container {
         flex-direction: column;
-    }
-    .sidebar {
+        height: calc(100vh - 60px); /* Account for navbar height */
+        margin: 0;
         width: 100%;
-        border-right: none;
-        border-bottom: 1px solid var(--border-color);
-        height: auto;
-        flex-shrink: 0;
-        padding-bottom: 0;
+        border-radius: 0;
+        flex: 1;
     }
     .chat-list-wrapper {
         overflow-x: auto;
@@ -395,10 +402,34 @@ nav.navbar {
         animation: none;
     }
     .chat-area {
-        height: 100%;
+        flex: 1;
+        min-height: 0; /* Important for flex child to shrink properly */
+        display: flex;
+        flex-direction: column;
+    }
+    .chat-messages {
+        flex: 1;
+        min-height: 0; /* Important for flex child to shrink properly */
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
     }
     .message {
         max-width: 80%;
+    }
+    .sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+        height: auto;
+        flex-shrink: 0;
+        padding-bottom: 0;
+    }
+}
+
+/* Handle mobile viewport height changes (keyboard appearance) */
+@media (max-width: 767.98px) and (max-height: 600px) {
+    .chat-container {
+        height: calc(100vh - 60px);
     }
 }
 
